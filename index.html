@@ -330,7 +330,7 @@
     <div class="section-header"><div><div class="section-title">🗓️ 시간표</div></div></div>
     
     <div class="week-tabs" id="weekTabs">
-      <button class="week-tab active" onclick="selectWeekDay(0,this)">월</button>
+      <button class="week-tab" onclick="selectWeekDay(0,this)">월</button>
       <button class="week-tab" onclick="selectWeekDay(1,this)">화</button>
       <button class="week-tab" onclick="selectWeekDay(2,this)">수</button>
       <button class="week-tab" onclick="selectWeekDay(3,this)">목</button>
@@ -806,8 +806,8 @@ function initWeekTabs() {
   currentWeekDay = todayIdx;
   const tabs = document.querySelectorAll('.week-tab');
   tabs.forEach((tab, i) => {
-    if (i === todayIdx) tab.classList.add('today');
-    if (i === todayIdx) tab.classList.add('active');
+    tab.classList.remove('active');
+    if (i === todayIdx) tab.classList.add('today', 'active');
   });
 }
 
