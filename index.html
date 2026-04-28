@@ -79,15 +79,6 @@
   .del-btn { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 0.7rem; padding: 0.2rem 0.4rem; border-radius: 4px; transition: all 0.2s; opacity: 0; }
   .item-row:hover .del-btn { opacity: 1; }
   .del-btn:hover { color: var(--red); background: rgba(192,57,43,0.1); }
-  .order-btn { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 0.65rem; padding: 0.15rem 0.3rem; border-radius: 3px; transition: all 0.2s; opacity: 0; line-height:1; }
-  .item-row:hover .order-btn, .lecture-course-header:hover .order-btn, .subject-title-row:hover .order-btn { opacity: 1; }
-  .order-btn:hover { color: var(--gold); background: var(--gold-dim); }
-  .edit-btn { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 0.68rem; padding: 0.2rem 0.4rem; border-radius: 4px; transition: all 0.2s; opacity: 0; }
-  .item-row:hover .edit-btn, .lecture-course-header:hover .edit-btn, .subject-title-row:hover .edit-btn { opacity: 1; }
-  .edit-btn:hover { color: var(--gold); background: var(--gold-dim); }
-  .inline-edit-wrap { display:flex; align-items:center; gap:0.4rem; flex:1; }
-  .inline-edit-input { background: var(--bg3); border: 1px solid var(--gold); border-radius: 5px; padding: 0.25rem 0.5rem; font-size: 0.82rem; color: var(--text); font-family: 'Noto Sans KR', sans-serif; outline: none; flex:1; min-width:0; }
-  .inline-edit-ok { background: var(--gold); border: none; color: #fff; border-radius: 4px; padding: 0.25rem 0.55rem; font-size: 0.72rem; cursor: pointer; white-space:nowrap; }
 
   /* Inputs */
   .add-row { display: flex; gap: 0.6rem; }
@@ -159,6 +150,10 @@
   .checklist-item.checked-item { background: var(--green-dim); }
   .cl-checkbox { width: 20px; height: 20px; border: 2px solid var(--border); border-radius: 50%; flex-shrink: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; transition: all 0.2s; background: var(--bg3); }
   .cl-checkbox.checked { background: var(--green2); border-color: var(--green2); color: #fff; }
+  .cl-checkbox.failed { background: var(--red); border-color: var(--red); color: #fff; }
+  .checklist-item.failed-item { background: rgba(192,57,43,0.06); }
+  .checklist-item.failed-item .cl-text { color: var(--text3); text-decoration: line-through; }
+  .cl-fail-chip { color: var(--red); border-color: var(--red); background: rgba(192,57,43,0.06); }
   .cl-text { flex: 1; font-size: 0.85rem; color: var(--text); cursor: pointer; line-height: 1.4; }
   .checklist-item.checked-item .cl-text { color: var(--text3); text-decoration: line-through; }
   .cl-del { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 0.72rem; padding: 0.2rem 0.4rem; border-radius: 4px; opacity: 0; transition: all 0.2s; }
@@ -248,6 +243,7 @@
       <div class="cl-stats">
         <div class="cl-stat-chip" id="cl-total-chip">총 0개</div>
         <div class="cl-stat-chip done-chip" id="cl-done-chip">완료 0개</div>
+        <div class="cl-stat-chip cl-fail-chip" id="cl-fail-chip">실패 0개</div>
       </div>
       <div class="checklist-wrap" id="checklist-container"></div>
       <div class="cl-add-row">
@@ -339,7 +335,7 @@
     <div class="section-header"><div><div class="section-title">🗓️ 시간표</div></div></div>
     
     <div class="week-tabs" id="weekTabs">
-      <button class="week-tab active" onclick="selectWeekDay(0,this)">월</button>
+      <button class="week-tab" onclick="selectWeekDay(0,this)">월</button>
       <button class="week-tab" onclick="selectWeekDay(1,this)">화</button>
       <button class="week-tab" onclick="selectWeekDay(2,this)">수</button>
       <button class="week-tab" onclick="selectWeekDay(3,this)">목</button>
@@ -526,35 +522,58 @@ function renderChecklist() {
   if (!container) return;
   const total = items.length;
   const done = items.filter(i=>i.done).length;
+  const failed = items.filter(i=>i.failed).length;
   document.getElementById('cl-total-chip').textContent = `총 ${total}개`;
   document.getElementById('cl-done-chip').textContent = `완료 ${done}개`;
+  document.getElementById('cl-fail-chip').textContent = `실패 ${failed}개`;
 
   if (total === 0) {
     container.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--text3);font-size:0.82rem;">아직 할 일이 없어요. 추가해 보세요 ✏️</div>';
     return;
   }
-  container.innerHTML = items.map((item, i) => `
-    <div class="checklist-item ${item.done ? 'checked-item' : ''}">
-      <div class="cl-checkbox ${item.done ? 'checked' : ''}" onclick="toggleCheckItem(${i})">${item.done ? '✓' : ''}</div>
-      <span class="cl-text" onclick="toggleCheckItem(${i})">${item.text}</span>
-      <button class="cl-del" onclick="delCheckItem(${i})">✕</button>
-    </div>`).join('');
+  container.innerHTML = items.map((item, i) => {
+    const rowClass = item.done ? 'checked-item' : item.failed ? 'failed-item' : '';
+    const cbClass  = item.done ? 'checked' : item.failed ? 'failed' : '';
+    const cbIcon   = item.done ? '✓' : item.failed ? '✕' : '';
+    return `
+    <div class="checklist-item ${rowClass}">
+      <div class="cl-checkbox ${cbClass}" onclick="toggleCheckItem(${i})">${cbIcon}</div>
+      <span class="cl-text">${item.text}</span>
+      <button class="cl-fail-btn" onclick="toggleFailItem(${i})" title="실패" style="background:none;border:none;cursor:pointer;font-size:0.75rem;padding:0.2rem 0.4rem;border-radius:4px;color:${item.failed?'var(--red)':'var(--text3)'};opacity:0;transition:all 0.2s;">✕</button>
+      <button class="cl-del" onclick="delCheckItem(${i})">🗑</button>
+    </div>`;
+  }).join('');
+  // hover로 실패 버튼 표시
+  document.querySelectorAll('.cl-fail-btn').forEach(btn => {
+    btn.closest('.checklist-item').addEventListener('mouseenter', () => btn.style.opacity='1');
+    btn.closest('.checklist-item').addEventListener('mouseleave', () => btn.style.opacity='0');
+  });
 }
 
 window.addCheckItem = () => {
   const inp = document.getElementById('cl-input');
   const text = inp.value.trim();
   if (!text) return;
-  state.checklist.push({ text, done: false });
+  state.checklist.push({ text, done: false, failed: false });
   inp.value = '';
   renderChecklist(); scheduleSave();
   showToast('할 일이 추가됐어요');
 };
 
 window.toggleCheckItem = (i) => {
-  state.checklist[i].done = !state.checklist[i].done;
+  const item = state.checklist[i];
+  item.done = !item.done;
+  if (item.done) item.failed = false; // 완료 시 실패 해제
   renderChecklist(); scheduleSave();
-  showToast(state.checklist[i].done ? '✓ 완료!' : '다시 미완료로');
+  showToast(item.done ? '✓ 완료!' : '미완료로 변경');
+};
+
+window.toggleFailItem = (i) => {
+  const item = state.checklist[i];
+  item.failed = !item.failed;
+  if (item.failed) item.done = false; // 실패 시 완료 해제
+  renderChecklist(); scheduleSave();
+  showToast(item.failed ? '✕ 실패로 표시' : '실패 해제');
 };
 
 window.delCheckItem = (i) => {
@@ -648,9 +667,6 @@ function renderLectures() {
           </div>
         </div>
         <div class="lecture-course-right">
-          <button class="order-btn" onclick="event.stopPropagation();moveLectureCourse(${ci},-1)" title="위로">▲</button>
-          <button class="order-btn" onclick="event.stopPropagation();moveLectureCourse(${ci},1)" title="아래로">▼</button>
-          <button class="edit-btn" onclick="event.stopPropagation();editLectureCourse(${ci})">✎</button>
           <button class="lecture-del-btn" onclick="event.stopPropagation();delLectureCourse(${ci})">삭제</button>
           <span class="lecture-course-chevron">▼</span>
         </div>
@@ -695,49 +711,6 @@ window.delLectureCourse = (ci) => {
   showToast('강의가 삭제됐어요');
 };
 
-window.moveLectureCourse = (ci, dir) => {
-  const arr = state.lectures;
-  const ni = ci + dir;
-  if (ni < 0 || ni >= arr.length) return;
-  [arr[ci], arr[ni]] = [arr[ni], arr[ci]];
-  renderLectures(); scheduleSave();
-};
-
-window.editLectureCourse = (ci) => {
-  const course = state.lectures[ci];
-  const container = document.getElementById('lecture-courses');
-  const courseEl = container.children[ci];
-  const header = courseEl.querySelector('.lecture-course-header');
-  const nameEl = courseEl.querySelector('.lecture-course-name');
-  // 이미 편집 중이면 무시
-  if (nameEl.querySelector('.inline-edit-wrap')) return;
-  const origName = course.name;
-  const origTotal = course.total;
-  nameEl.innerHTML = `<div class="inline-edit-wrap">
-    <input class="inline-edit-input" id="lec-edit-name-${ci}" value="${origName}" style="min-width:100px;" />
-    <input class="inline-edit-input" id="lec-edit-total-${ci}" type="number" value="${origTotal}" style="width:60px;" min="1" max="300" />
-    <button class="inline-edit-ok" onclick="saveLectureEdit(${ci})">저장</button>
-    <button class="inline-edit-ok" style="background:var(--bg3);color:var(--text2);border:1px solid var(--border);" onclick="renderLectures()">취소</button>
-  </div>`;
-  document.getElementById(`lec-edit-name-${ci}`).focus();
-};
-
-window.saveLectureEdit = (ci) => {
-  const newName = document.getElementById(`lec-edit-name-${ci}`).value.trim();
-  const newTotal = parseInt(document.getElementById(`lec-edit-total-${ci}`).value) || 0;
-  if (!newName || newTotal < 1) { showToast('이름과 강의 수를 확인해 주세요'); return; }
-  const course = state.lectures[ci];
-  course.name = newName;
-  if (newTotal !== course.total) {
-    // 강의 수 변경 시 done 배열 조정
-    const oldDone = course.done || [];
-    course.done = Array.from({length: newTotal}, (_, k) => oldDone[k] || false);
-    course.total = newTotal;
-  }
-  renderLectures(); scheduleSave();
-  showToast('강의 정보가 수정됐어요');
-};
-
 // ── 일반 진도표 (1회독/2회독 지원) ──
 function renderSection(type) {
   const groups = state[type] || [];
@@ -756,7 +729,7 @@ function renderSection(type) {
     div.innerHTML = `
       <div class="subject-title-row" onclick="toggleGroup(this)">
         <div style="flex:1;min-width:0;">
-          <div class="subject-name" style="margin-bottom:0.45rem;" id="subj-name-${type}-${gi}">
+          <div class="subject-name" style="margin-bottom:0.45rem;">
             ${group.name}
             <span class="subject-badge">1회 ${done1}/${total} · 2회 ${done2}/${total}</span>
           </div>
@@ -777,13 +750,7 @@ function renderSection(type) {
             </div>
           </div>
         </div>
-        <div style="display:flex;align-items:center;gap:0.2rem;margin-left:0.6rem;" onclick="event.stopPropagation()">
-          <button class="order-btn" onclick="moveSubject('${type}',${gi},-1)" title="위로">▲</button>
-          <button class="order-btn" onclick="moveSubject('${type}',${gi},1)" title="아래로">▼</button>
-          <button class="edit-btn" onclick="editSubject('${type}',${gi})">✎</button>
-          <button class="del-btn" style="opacity:1;font-size:0.68rem;" onclick="delSubject('${type}',${gi})">삭제</button>
-        </div>
-        <span class="subject-chevron" style="margin-left:0.4rem;">▼</span>
+        <span class="subject-chevron" style="margin-left:0.8rem;">▼</span>
       </div>
       <div class="items-list collapsed">
         <div class="item-row" style="background:var(--bg3);padding:0.4rem 1rem;border-bottom:1px solid var(--border);">
@@ -794,15 +761,12 @@ function renderSection(type) {
         </div>
         ${group.items.map((item, ii) => {
           const rowDone = item.done && item.done2;
-          return `<div class="item-row ${rowDone?'done':''}" data-type="${type}" data-gi="${gi}" data-ii="${ii}">
-            <span class="item-label" id="item-label-${type}-${gi}-${ii}" style="${rowDone?'color:var(--text3);text-decoration:line-through;':''}">${item.label}</span>
+          return `<div class="item-row ${rowDone?'done':''}">
+            <span class="item-label" style="${rowDone?'color:var(--text3);text-decoration:line-through;':''}">${item.label}</span>
             <div style="display:flex;gap:6px;align-items:center;margin-left:auto;">
               <div class="check-box ${item.done?'checked':''}" style="width:22px;height:22px;" onclick="toggleItem('${type}',${gi},${ii},1)" title="1회독">${item.done?'✓':''}</div>
               <div class="check-box ${item.done2?'checked':''}" style="width:22px;height:22px;background:${item.done2?'var(--text2)':'var(--bg)'};border-color:${item.done2?'var(--text2)':'var(--border)'};" onclick="toggleItem('${type}',${gi},${ii},2)" title="2회독">${item.done2?'✓':''}</div>
             </div>
-            <button class="order-btn" onclick="moveItem('${type}',${gi},${ii},-1)" title="위로">▲</button>
-            <button class="order-btn" onclick="moveItem('${type}',${gi},${ii},1)" title="아래로">▼</button>
-            <button class="edit-btn" onclick="editItem('${type}',${gi},${ii})">✎</button>
             <button class="del-btn" onclick="delItem('${type}',${gi},${ii})">✕</button>
           </div>`;
         }).join('')}
@@ -862,70 +826,6 @@ window.addSubject = (type) => {
   showToast(`"${name}" 과목이 추가됐어요`);
 };
 
-window.delSubject = (type, gi) => {
-  state[type].splice(gi, 1);
-  renderSection(type); renderTrackerOverview(); scheduleSave();
-  showToast('과목이 삭제됐어요');
-};
-
-window.moveSubject = (type, gi, dir) => {
-  const arr = state[type];
-  const ni = gi + dir;
-  if (ni < 0 || ni >= arr.length) return;
-  [arr[gi], arr[ni]] = [arr[ni], arr[gi]];
-  renderSection(type); scheduleSave();
-};
-
-window.editSubject = (type, gi) => {
-  const nameEl = document.getElementById(`subj-name-${type}-${gi}`);
-  if (!nameEl || nameEl.querySelector('.inline-edit-wrap')) return;
-  const origName = state[type][gi].name;
-  nameEl.innerHTML = `<div class="inline-edit-wrap">
-    <input class="inline-edit-input" id="subj-edit-${type}-${gi}" value="${origName}" />
-    <button class="inline-edit-ok" onclick="saveSubjectEdit('${type}',${gi})">저장</button>
-    <button class="inline-edit-ok" style="background:var(--bg3);color:var(--text2);border:1px solid var(--border);" onclick="renderSection('${type}')">취소</button>
-  </div>`;
-  document.getElementById(`subj-edit-${type}-${gi}`).focus();
-};
-
-window.saveSubjectEdit = (type, gi) => {
-  const inp = document.getElementById(`subj-edit-${type}-${gi}`);
-  const newName = inp ? inp.value.trim() : '';
-  if (!newName) { showToast('과목명을 입력해 주세요'); return; }
-  state[type][gi].name = newName;
-  renderSection(type); scheduleSave();
-  showToast('과목명이 수정됐어요');
-};
-
-window.moveItem = (type, gi, ii, dir) => {
-  const arr = state[type][gi].items;
-  const ni = ii + dir;
-  if (ni < 0 || ni >= arr.length) return;
-  [arr[ii], arr[ni]] = [arr[ni], arr[ii]];
-  renderSection(type); scheduleSave();
-};
-
-window.editItem = (type, gi, ii) => {
-  const labelEl = document.getElementById(`item-label-${type}-${gi}-${ii}`);
-  if (!labelEl || labelEl.querySelector('.inline-edit-wrap')) return;
-  const origLabel = state[type][gi].items[ii].label;
-  labelEl.innerHTML = `<span class="inline-edit-wrap">
-    <input class="inline-edit-input" id="item-edit-${type}-${gi}-${ii}" value="${origLabel}" />
-    <button class="inline-edit-ok" onclick="saveItemEdit('${type}',${gi},${ii})">저장</button>
-    <button class="inline-edit-ok" style="background:var(--bg3);color:var(--text2);border:1px solid var(--border);" onclick="renderSection('${type}')">취소</button>
-  </span>`;
-  document.getElementById(`item-edit-${type}-${gi}-${ii}`).focus();
-};
-
-window.saveItemEdit = (type, gi, ii) => {
-  const inp = document.getElementById(`item-edit-${type}-${gi}-${ii}`);
-  const newLabel = inp ? inp.value.trim() : '';
-  if (!newLabel) { showToast('항목명을 입력해 주세요'); return; }
-  state[type][gi].items[ii].label = newLabel;
-  renderSection(type); scheduleSave();
-  showToast('항목이 수정됐어요');
-};
-
 // ── 요일별 시간표 ──
 function initWeekTabs() {
   const now = new Date();
@@ -934,8 +834,8 @@ function initWeekTabs() {
   currentWeekDay = todayIdx;
   const tabs = document.querySelectorAll('.week-tab');
   tabs.forEach((tab, i) => {
-    if (i === todayIdx) tab.classList.add('today');
-    if (i === todayIdx) tab.classList.add('active');
+    tab.classList.remove('active');
+    if (i === todayIdx) tab.classList.add('today', 'active');
   });
 }
 
