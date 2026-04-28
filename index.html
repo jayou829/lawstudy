@@ -713,18 +713,18 @@ window.editLectureCourse = (ci) => {
   if (nameEl.querySelector('.inline-edit-wrap')) return;
   const origName = course.name;
   const origTotal = course.total;
-  nameEl.innerHTML = \`<div class="inline-edit-wrap">
-    <input class="inline-edit-input" id="lec-edit-name-\${ci}" value="\${origName}" style="min-width:100px;" />
-    <input class="inline-edit-input" id="lec-edit-total-\${ci}" type="number" value="\${origTotal}" style="width:60px;" min="1" max="300" />
-    <button class="inline-edit-ok" onclick="saveLectureEdit(\${ci})">저장</button>
+  nameEl.innerHTML = `<div class="inline-edit-wrap">
+    <input class="inline-edit-input" id="lec-edit-name-${ci}" value="${origName}" style="min-width:100px;" />
+    <input class="inline-edit-input" id="lec-edit-total-${ci}" type="number" value="${origTotal}" style="width:60px;" min="1" max="300" />
+    <button class="inline-edit-ok" onclick="saveLectureEdit(${ci})">저장</button>
     <button class="inline-edit-ok" style="background:var(--bg3);color:var(--text2);border:1px solid var(--border);" onclick="renderLectures()">취소</button>
-  </div>\`;
-  document.getElementById(\`lec-edit-name-\${ci}\`).focus();
+  </div>`;
+  document.getElementById(`lec-edit-name-${ci}`).focus();
 };
 
 window.saveLectureEdit = (ci) => {
-  const newName = document.getElementById(\`lec-edit-name-\${ci}\`).value.trim();
-  const newTotal = parseInt(document.getElementById(\`lec-edit-total-\${ci}\`).value) || 0;
+  const newName = document.getElementById(`lec-edit-name-${ci}`).value.trim();
+  const newTotal = parseInt(document.getElementById(`lec-edit-total-${ci}`).value) || 0;
   if (!newName || newTotal < 1) { showToast('이름과 강의 수를 확인해 주세요'); return; }
   const course = state.lectures[ci];
   course.name = newName;
