@@ -216,9 +216,9 @@
 </header>
 
 <nav>
-  <button class="nav-btn active" onclick="showSection('checklist',this)">✅ 오늘 할 일</button>
-  <button class="nav-btn" onclick="showSection('tracker',this)">📊 진도표</button>
-  <button class="nav-btn" onclick="showSection('daily',this)">🗓️ 시간표</button>
+  <button class="nav-btn active" onclick="showSection('checklist',this)">Today</button>
+  <button class="nav-btn" onclick="showSection('tracker',this)">Tracker</button>
+  <button class="nav-btn" onclick="showSection('daily',this)">Timetable</button>
 </nav>
 
 <main>
@@ -227,11 +227,11 @@
   <div class="section active" id="section-checklist">
     <div class="section-header">
       <div>
-        <div class="section-title">TODAY</div>
+        <div class="section-title">✅ 오늘 할 일</div>
       </div>
       <div style="display:flex;align-items:center;gap:0.8rem;">
         <div class="cl-date-badge" id="cl-date-badge"></div>
-        <button class="add-btn" id="cl-view-toggle" onclick="toggleChecklistView()" style="font-size:0.72rem;padding:0.35rem 0.8rem;">🗓️ 오늘 시간표</button>
+        <button class="add-btn" id="cl-view-toggle" onclick="toggleChecklistView()" style="font-size:0.72rem;padding:0.35rem 0.8rem;">🗓️</button>
       </div>
     </div>
     <!-- 체크리스트 뷰 -->
@@ -258,7 +258,7 @@
     <!-- 전체현황 메인 뷰 -->
     <div id="tracker-view-main">
       <div class="section-header">
-        <div class="section-title">TRACKER</div>
+        <div class="section-title">📊 진도표</div>
       </div>
       <div class="tracker-overview-grid" id="trackerOverviewGrid"></div>
     </div>
@@ -327,7 +327,7 @@
 
   <!-- ── 요일별 시간표 ── -->
   <div class="section" id="section-daily">
-    <div class="section-header"><div><div class="section-title">TIMETABLE</div></div></div>
+    <div class="section-header"><div><div class="section-title">🗓️ 시간표</div></div></div>
     
     <div class="week-tabs" id="weekTabs">
       <button class="week-tab active" onclick="selectWeekDay(0,this)">월</button>
