@@ -135,6 +135,12 @@
   .time-input { background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; padding: 0.5rem 0.7rem; font-size: 0.82rem; color: var(--text); font-family: 'DM Mono', monospace; outline: none; transition: border-color 0.2s; text-align: center; }
   .time-input:focus { border-color: var(--gold); }
   .timetable-empty { text-align: center; padding: 2.5rem 1rem; color: var(--text3); font-size: 0.82rem; background: var(--card); border: 1px dashed var(--border); border-radius: 8px; }
+  .day-section { margin-bottom: 1.6rem; }
+  .day-section-header { display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem 0; margin-bottom: 0.6rem; border-bottom: 2px solid var(--border); }
+  .day-section-name { font-family: 'Noto Serif KR', serif; font-size: 0.95rem; font-weight: 600; color: var(--gold); }
+  .day-section-name.today-label { color: var(--green2); }
+  .day-section-count { font-family: 'DM Mono', monospace; font-size: 0.68rem; color: var(--text3); background: var(--bg3); border: 1px solid var(--border); border-radius: 100px; padding: 0.1rem 0.5rem; }
+  .day-section-empty { color: var(--text3); font-size: 0.78rem; padding: 0.6rem 0.2rem; font-style: italic; }
 
   /* ── 오늘 할 일 체크리스트 ── */
   .checklist-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.05); margin-bottom: 1.5rem; }
@@ -322,23 +328,25 @@
   <!-- ── 요일별 시간표 ── -->
   <div class="section" id="section-daily">
     <div class="section-header"><div><div class="section-title">🗓️ 요일별 고정 시간표</div></div></div>
+    <!-- 추가할 요일 선택 -->
     <div class="week-tabs" id="weekTabs">
-      <button class="week-tab" onclick="selectWeekDay(0,this)">월</button>
-      <button class="week-tab" onclick="selectWeekDay(1,this)">화</button>
-      <button class="week-tab" onclick="selectWeekDay(2,this)">수</button>
-      <button class="week-tab" onclick="selectWeekDay(3,this)">목</button>
-      <button class="week-tab" onclick="selectWeekDay(4,this)">금</button>
-      <button class="week-tab" onclick="selectWeekDay(5,this)">토</button>
-      <button class="week-tab" onclick="selectWeekDay(6,this)">일</button>
+      <button class="week-tab active" onclick="selectAddDay(0,this)">월</button>
+      <button class="week-tab" onclick="selectAddDay(1,this)">화</button>
+      <button class="week-tab" onclick="selectAddDay(2,this)">수</button>
+      <button class="week-tab" onclick="selectAddDay(3,this)">목</button>
+      <button class="week-tab" onclick="selectAddDay(4,this)">금</button>
+      <button class="week-tab" onclick="selectAddDay(5,this)">토</button>
+      <button class="week-tab" onclick="selectAddDay(6,this)">일</button>
     </div>
     <div class="add-time-row">
-      <input class="time-input" id="time-start" type="text" placeholder="09:00" maxlength="5" inputmode="numeric" style="width:72px;text-align:center;" />
+      <input class="time-input" id="time-start" type="text" placeholder="0900" maxlength="5" inputmode="numeric" style="width:72px;text-align:center;" />
       <span>~</span>
-      <input class="time-input" id="time-end" type="text" placeholder="10:00" maxlength="5" inputmode="numeric" style="width:72px;text-align:center;" />
+      <input class="time-input" id="time-end" type="text" placeholder="1000" maxlength="5" inputmode="numeric" style="width:72px;text-align:center;" />
       <input class="add-input" id="time-subject" placeholder="과목 / 내용" style="flex:1;min-width:120px;" />
       <button class="add-btn" onclick="addTimeBlock()">+ 추가</button>
     </div>
-    <div id="timetable-container"></div>
+    <!-- 전체 요일 한 페이지 표시 -->
+    <div id="timetable-all"></div>
   </div>
 
 </main>
@@ -391,7 +399,7 @@ onSnapshot(docRef, (snap) => {
     renderChecklist();
     renderLectures();
     TRACKER_KEYS.forEach(renderSection);
-    renderWeekDay(currentWeekDay);
+    renderAllDays();
     renderTrackerOverview();
   }
   if (firstLoad) {
@@ -791,74 +799,102 @@ window.addSubject = (type) => {
 };
 
 // ── 요일별 시간표 ──
-function initWeekTabs() {
-  const now = new Date();
-  // JS getDay(): 0=일,1=월,...,6=토 → 우리 인덱스: 0=월,...,6=일
-  const jsDay = now.getDay();
-  const todayIdx = jsDay === 0 ? 6 : jsDay - 1;
-  currentWeekDay = todayIdx;
-
-  const tabs = document.querySelectorAll('.week-tab');
-  tabs.forEach((tab, i) => {
-    if (i === todayIdx) tab.classList.add('today');
-    if (i === todayIdx) tab.classList.add('active');
-  });
+// 오늘 요일 인덱스 계산 (0=월 ... 6=일)
+function getTodayIdx() {
+  const jsDay = new Date().getDay();
+  return jsDay === 0 ? 6 : jsDay - 1;
 }
 
-window.selectWeekDay = (dayIdx, btn) => {
+function initWeekTabs() {
+  const todayIdx = getTodayIdx();
+  currentWeekDay = todayIdx;
+  const tabs = document.querySelectorAll('.week-tab');
+  tabs.forEach((tab, i) => {
+    tab.classList.remove('active','today');
+    if (i === todayIdx) tab.classList.add('today', 'active');
+  });
+  // 기본 선택 요일을 오늘로
+  const firstTab = tabs[todayIdx];
+  if (firstTab) firstTab.classList.add('active');
+}
+
+// 탭은 이제 "추가할 요일 선택" 용도
+window.selectAddDay = (dayIdx, btn) => {
   currentWeekDay = dayIdx;
   document.querySelectorAll('.week-tab').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  renderWeekDay(dayIdx);
 };
 
-function renderWeekDay(dayIdx) {
-  const blocks = state.weekly[dayIdx] || [];
-  const container = document.getElementById('timetable-container');
+// 전체 요일 한 페이지에 렌더
+function renderAllDays() {
+  const container = document.getElementById('timetable-all');
   if (!container) return;
-  if (blocks.length === 0) {
-    container.innerHTML = `<div class="timetable-empty">${DAY_NAMES[dayIdx]}요일 일정이 없어요. 위에서 추가해 보세요 📋</div>`;
-    return;
-  }
-  container.innerHTML = blocks.map((block, bi) => `
-    <div class="time-block">
-      <div class="time-block-header">
-        <span class="time-label">${block.start} ~ ${block.end}</span>
-        <input class="time-subject-input" placeholder="과목 / 내용" value="${escHtml(block.subject||'')}" onchange="updateWeekBlock(${dayIdx},${bi},'subject',this.value)" />
-        <button class="del-btn" style="opacity:1;color:var(--text3);" onclick="delWeekBlock(${dayIdx},${bi})">✕</button>
-      </div>
-      <div class="time-block-body">
-        <textarea class="time-note" rows="2" placeholder="메모..." onchange="updateWeekBlock(${dayIdx},${bi},'note',this.value)">${escHtml(block.note||'')}</textarea>
-      </div>
-    </div>`).join('');
+  const todayIdx = getTodayIdx();
+  container.innerHTML = DAY_NAMES.map((dayName, dayIdx) => {
+    const blocks = state.weekly[dayIdx] || [];
+    const isToday = dayIdx === todayIdx;
+    const blocksHtml = blocks.length === 0
+      ? `<div class="day-section-empty">일정 없음</div>`
+      : blocks.map((block, bi) => `
+          <div class="time-block">
+            <div class="time-block-header">
+              <span class="time-label">${block.start} ~ ${block.end}</span>
+              <input class="time-subject-input" placeholder="과목 / 내용" value="${escHtml(block.subject||'')}" onchange="updateWeekBlock(${dayIdx},${bi},'subject',this.value)" />
+              <button class="del-btn" style="opacity:1;color:var(--text3);" onclick="delWeekBlock(${dayIdx},${bi})">✕</button>
+            </div>
+            <div class="time-block-body">
+              <textarea class="time-note" rows="2" placeholder="메모..." onchange="updateWeekBlock(${dayIdx},${bi},'note',this.value)">${escHtml(block.note||'')}</textarea>
+            </div>
+          </div>`).join('');
+    return `
+      <div class="day-section">
+        <div class="day-section-header">
+          <span class="day-section-name${isToday ? ' today-label' : ''}">${dayName}요일${isToday ? ' 📌' : ''}</span>
+          <span class="day-section-count">${blocks.length}개</span>
+        </div>
+        ${blocksHtml}
+      </div>`;
+  }).join('');
 }
 
+// renderWeekDay는 renderAllDays로 연결 (기존 호출 호환)
+function renderWeekDay(dayIdx) { renderAllDays(); }
+
 function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// 시간 문자열 파싱: "0900" 또는 "09:00" 모두 수용 → "09:00" 반환
+function parseTime(raw) {
+  const s = raw.replace(':', '').replace(/\s/g, '');
+  // 3~4자리 숫자 (예: 900, 0900, 930)
+  if (/^\d{3,4}$/.test(s)) {
+    const h = s.length === 3 ? s.slice(0,1) : s.slice(0,2);
+    const m = s.length === 3 ? s.slice(1)   : s.slice(2);
+    const hh = parseInt(h, 10), mm = parseInt(m, 10);
+    if (hh < 0 || hh > 23 || mm < 0 || mm > 59) return null;
+    return `${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}`;
+  }
+  return null;
+}
 
 window.addTimeBlock = () => {
   const startRaw = document.getElementById('time-start').value.trim();
   const endRaw   = document.getElementById('time-end').value.trim();
   const subject  = document.getElementById('time-subject').value.trim();
 
-  // HH:MM 형식 검증
-  const timeRe = /^([01]?\d|2[0-3]):([0-5]\d)$/;
-  if (!timeRe.test(startRaw) || !timeRe.test(endRaw)) {
-    showToast('시간을 HH:MM 형식으로 입력해 주세요 (예: 09:00)');
-    return;
-  }
-  // 두 자리로 정규화
-  const norm = t => { const [h,m] = t.split(':'); return `${h.padStart(2,'0')}:${m}`; };
-  const start = norm(startRaw);
-  const end   = norm(endRaw);
+  const start = parseTime(startRaw);
+  const end   = parseTime(endRaw);
 
+  if (!start) { showToast('시작 시간을 입력해 주세요 (예: 0900 또는 09:00)'); return; }
+  if (!end)   { showToast('종료 시간을 입력해 주세요 (예: 1000 또는 10:00)'); return; }
   if (start >= end) { showToast('종료 시간이 시작 시간보다 늦어야 해요'); return; }
+
   if (!state.weekly[currentWeekDay]) state.weekly[currentWeekDay] = [];
   state.weekly[currentWeekDay].push({ start, end, subject, note: '' });
   state.weekly[currentWeekDay].sort((a,b) => a.start.localeCompare(b.start));
   document.getElementById('time-start').value = '';
   document.getElementById('time-end').value = '';
   document.getElementById('time-subject').value = '';
-  renderWeekDay(currentWeekDay); scheduleSave();
+  renderAllDays(); scheduleSave();
   showToast(`${DAY_NAMES[currentWeekDay]}요일 ${start}~${end} 추가됐어요`);
 };
 
@@ -868,7 +904,7 @@ window.updateWeekBlock = (dayIdx, bi, field, val) => {
 
 window.delWeekBlock = (dayIdx, bi) => {
   state.weekly[dayIdx].splice(bi, 1);
-  renderWeekDay(dayIdx); scheduleSave();
+  renderAllDays(); scheduleSave();
   showToast('시간 블록이 삭제됐어요');
 };
 
