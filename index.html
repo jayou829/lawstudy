@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>법학 공부 트래커</title>
+<title>STUDY TRACKER</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;600;700&family=Noto+Sans+KR:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -227,7 +227,7 @@
   <div class="section active" id="section-checklist">
     <div class="section-header">
       <div>
-        <div class="section-title">✅ 오늘 할 일</div>
+        <div class="section-title">TODAY</div>
       </div>
       <div style="display:flex;align-items:center;gap:0.8rem;">
         <div class="cl-date-badge" id="cl-date-badge"></div>
@@ -258,7 +258,7 @@
     <!-- 전체현황 메인 뷰 -->
     <div id="tracker-view-main">
       <div class="section-header">
-        <div class="section-title">📊 진도표</div>
+        <div class="section-title">TRACKER</div>
       </div>
       <div class="tracker-overview-grid" id="trackerOverviewGrid"></div>
     </div>
@@ -266,8 +266,8 @@
     <!-- 강의 서브 뷰 -->
     <div id="tracker-view-lecture" style="display:none;">
       <div class="section-header">
-        <button class="tracker-back-btn" onclick="showTrackerMain()">← 돌아가기</button>
-        <div class="section-title">강의 진도표</div>
+        <button class="tracker-back-btn" onclick="showTrackerMain()">←</button>
+        <div class="section-title">강의</div>
         <div></div>
       </div>
       <div id="lecture-progress-bars"></div>
@@ -282,8 +282,8 @@
     <!-- 개념서 서브 뷰 -->
     <div id="tracker-view-concept" style="display:none;">
       <div class="section-header">
-        <button class="tracker-back-btn" onclick="showTrackerMain()">← 돌아가기</button>
-        <div class="section-title">📖 개념서 진도표</div>
+        <button class="tracker-back-btn" onclick="showTrackerMain()">←</button>
+        <div class="section-title">개념서</div>
         <div></div>
       </div>
       <div class="add-subject-row"><input class="add-input" id="concept-subj-input" placeholder="과목명 (예: 민소법)" /><button class="add-btn" onclick="addSubject('concept')">+ 과목 추가</button></div>
@@ -293,8 +293,8 @@
     <!-- 암기장 서브 뷰 -->
     <div id="tracker-view-memo" style="display:none;">
       <div class="section-header">
-        <button class="tracker-back-btn" onclick="showTrackerMain()">← 돌아가기</button>
-        <div class="section-title">🧠 암기장 진도표</div>
+        <button class="tracker-back-btn" onclick="showTrackerMain()">←</button>
+        <div class="section-title">암기장</div>
         <div></div>
       </div>
       <div class="add-subject-row"><input class="add-input" id="memo-subj-input" placeholder="과목명 (예: 형소법)" /><button class="add-btn" onclick="addSubject('memo')">+ 과목 추가</button></div>
@@ -304,8 +304,8 @@
     <!-- 선택형 서브 뷰 -->
     <div id="tracker-view-choice" style="display:none;">
       <div class="section-header">
-        <button class="tracker-back-btn" onclick="showTrackerMain()">← 돌아가기</button>
-        <div class="section-title">📝 선택형 진도표</div>
+        <button class="tracker-back-btn" onclick="showTrackerMain()">←</button>
+        <div class="section-title">선택형</div>
         <div></div>
       </div>
       <div class="add-subject-row"><input class="add-input" id="choice-subj-input" placeholder="과목명 (예: 헌법)" /><button class="add-btn" onclick="addSubject('choice')">+ 과목 추가</button></div>
@@ -315,8 +315,8 @@
     <!-- 사례형 서브 뷰 -->
     <div id="tracker-view-case" style="display:none;">
       <div class="section-header">
-        <button class="tracker-back-btn" onclick="showTrackerMain()">← 돌아가기</button>
-        <div class="section-title">⚖️ 사례형 진도표</div>
+        <button class="tracker-back-btn" onclick="showTrackerMain()">←</button>
+        <div class="section-title">사례형</div>
         <div></div>
       </div>
       <div class="add-subject-row"><input class="add-input" id="case-subj-input" placeholder="과목명 (예: 형법)" /><button class="add-btn" onclick="addSubject('case')">+ 과목 추가</button></div>
@@ -327,16 +327,16 @@
 
   <!-- ── 요일별 시간표 ── -->
   <div class="section" id="section-daily">
-    <div class="section-header"><div><div class="section-title">🗓️ 요일별 고정 시간표</div></div></div>
-    <!-- 추가할 요일 선택 -->
+    <div class="section-header"><div><div class="section-title">TIMETABLE</div></div></div>
+    
     <div class="week-tabs" id="weekTabs">
-      <button class="week-tab active" onclick="selectAddDay(0,this)">월</button>
-      <button class="week-tab" onclick="selectAddDay(1,this)">화</button>
-      <button class="week-tab" onclick="selectAddDay(2,this)">수</button>
-      <button class="week-tab" onclick="selectAddDay(3,this)">목</button>
-      <button class="week-tab" onclick="selectAddDay(4,this)">금</button>
-      <button class="week-tab" onclick="selectAddDay(5,this)">토</button>
-      <button class="week-tab" onclick="selectAddDay(6,this)">일</button>
+      <button class="week-tab active" onclick="selectWeekDay(0,this)">월</button>
+      <button class="week-tab" onclick="selectWeekDay(1,this)">화</button>
+      <button class="week-tab" onclick="selectWeekDay(2,this)">수</button>
+      <button class="week-tab" onclick="selectWeekDay(3,this)">목</button>
+      <button class="week-tab" onclick="selectWeekDay(4,this)">금</button>
+      <button class="week-tab" onclick="selectWeekDay(5,this)">토</button>
+      <button class="week-tab" onclick="selectWeekDay(6,this)">일</button>
     </div>
     <div class="add-time-row">
       <input class="time-input" id="time-start" type="text" placeholder="0900" maxlength="5" inputmode="numeric" style="width:72px;text-align:center;" />
@@ -345,8 +345,8 @@
       <input class="add-input" id="time-subject" placeholder="과목 / 내용" style="flex:1;min-width:120px;" />
       <button class="add-btn" onclick="addTimeBlock()">+ 추가</button>
     </div>
-    <!-- 전체 요일 한 페이지 표시 -->
-    <div id="timetable-all"></div>
+    
+    <div id="timetable-container"></div>
   </div>
 
 </main>
@@ -399,7 +399,7 @@ onSnapshot(docRef, (snap) => {
     renderChecklist();
     renderLectures();
     TRACKER_KEYS.forEach(renderSection);
-    renderAllDays();
+    renderWeekDay(currentWeekDay);
     renderTrackerOverview();
   }
   if (firstLoad) {
@@ -564,13 +564,13 @@ window.toggleChecklistView = () => {
     clViewMode = 'timetable';
     checklistEl.style.display = 'none';
     timetableEl.style.display = 'block';
-    btn.textContent = '✅ 할 일 목록';
+    btn.textContent = '✅';
     renderTodayTimetable();
   } else {
     clViewMode = 'checklist';
     timetableEl.style.display = 'none';
     checklistEl.style.display = 'block';
-    btn.textContent = '🗓️ 오늘 시간표';
+    btn.textContent = '🗓️';
   }
 };
 
@@ -799,66 +799,45 @@ window.addSubject = (type) => {
 };
 
 // ── 요일별 시간표 ──
-// 오늘 요일 인덱스 계산 (0=월 ... 6=일)
-function getTodayIdx() {
-  const jsDay = new Date().getDay();
-  return jsDay === 0 ? 6 : jsDay - 1;
-}
-
 function initWeekTabs() {
-  const todayIdx = getTodayIdx();
+  const now = new Date();
+  const jsDay = now.getDay();
+  const todayIdx = jsDay === 0 ? 6 : jsDay - 1;
   currentWeekDay = todayIdx;
   const tabs = document.querySelectorAll('.week-tab');
   tabs.forEach((tab, i) => {
-    tab.classList.remove('active','today');
-    if (i === todayIdx) tab.classList.add('today', 'active');
+    if (i === todayIdx) tab.classList.add('today');
+    if (i === todayIdx) tab.classList.add('active');
   });
-  // 기본 선택 요일을 오늘로
-  const firstTab = tabs[todayIdx];
-  if (firstTab) firstTab.classList.add('active');
 }
 
-// 탭은 이제 "추가할 요일 선택" 용도
-window.selectAddDay = (dayIdx, btn) => {
+window.selectWeekDay = (dayIdx, btn) => {
   currentWeekDay = dayIdx;
   document.querySelectorAll('.week-tab').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
+  renderWeekDay(dayIdx);
 };
 
-// 전체 요일 한 페이지에 렌더
-function renderAllDays() {
-  const container = document.getElementById('timetable-all');
+function renderWeekDay(dayIdx) {
+  const blocks = state.weekly[dayIdx] || [];
+  const container = document.getElementById('timetable-container');
   if (!container) return;
-  const todayIdx = getTodayIdx();
-  container.innerHTML = DAY_NAMES.map((dayName, dayIdx) => {
-    const blocks = state.weekly[dayIdx] || [];
-    const isToday = dayIdx === todayIdx;
-    const blocksHtml = blocks.length === 0
-      ? `<div class="day-section-empty">일정 없음</div>`
-      : blocks.map((block, bi) => `
-          <div class="time-block">
-            <div class="time-block-header">
-              <span class="time-label">${block.start} ~ ${block.end}</span>
-              <input class="time-subject-input" placeholder="과목 / 내용" value="${escHtml(block.subject||'')}" onchange="updateWeekBlock(${dayIdx},${bi},'subject',this.value)" />
-              <button class="del-btn" style="opacity:1;color:var(--text3);" onclick="delWeekBlock(${dayIdx},${bi})">✕</button>
-            </div>
-            <div class="time-block-body">
-              <textarea class="time-note" rows="2" placeholder="메모..." onchange="updateWeekBlock(${dayIdx},${bi},'note',this.value)">${escHtml(block.note||'')}</textarea>
-            </div>
-          </div>`).join('');
-    return `
-      <div class="day-section">
-        <div class="day-section-header">
-          <span class="day-section-name${isToday ? ' today-label' : ''}">${dayName}요일${isToday ? ' 📌' : ''}</span>
-          <span class="day-section-count">${blocks.length}개</span>
-        </div>
-        ${blocksHtml}
-      </div>`;
-  }).join('');
+  if (blocks.length === 0) {
+    container.innerHTML = `<div class="timetable-empty">${DAY_NAMES[dayIdx]}요일 일정이 없어요. 위에서 추가해 보세요 📋</div>`;
+    return;
+  }
+  container.innerHTML = blocks.map((block, bi) => `
+    <div class="time-block">
+      <div class="time-block-header">
+        <span class="time-label">${block.start} ~ ${block.end}</span>
+        <input class="time-subject-input" placeholder="과목 / 내용" value="${escHtml(block.subject||'')}" onchange="updateWeekBlock(${dayIdx},${bi},'subject',this.value)" />
+        <button class="del-btn" style="opacity:1;color:var(--text3);" onclick="delWeekBlock(${dayIdx},${bi})">✕</button>
+      </div>
+      <div class="time-block-body">
+        <textarea class="time-note" rows="2" placeholder="메모..." onchange="updateWeekBlock(${dayIdx},${bi},'note',this.value)">${escHtml(block.note||'')}</textarea>
+      </div>
+    </div>`).join('');
 }
-
-// renderWeekDay는 renderAllDays로 연결 (기존 호출 호환)
-function renderWeekDay(dayIdx) { renderAllDays(); }
 
 function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
@@ -894,7 +873,7 @@ window.addTimeBlock = () => {
   document.getElementById('time-start').value = '';
   document.getElementById('time-end').value = '';
   document.getElementById('time-subject').value = '';
-  renderAllDays(); scheduleSave();
+  renderWeekDay(currentWeekDay); scheduleSave();
   showToast(`${DAY_NAMES[currentWeekDay]}요일 ${start}~${end} 추가됐어요`);
 };
 
@@ -904,7 +883,7 @@ window.updateWeekBlock = (dayIdx, bi, field, val) => {
 
 window.delWeekBlock = (dayIdx, bi) => {
   state.weekly[dayIdx].splice(bi, 1);
-  renderAllDays(); scheduleSave();
+  renderWeekDay(dayIdx); scheduleSave();
   showToast('시간 블록이 삭제됐어요');
 };
 
