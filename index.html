@@ -1462,11 +1462,12 @@ function getCat(id) { return FIXED_CATEGORIES.find(c => c.id === id); }
 
 function renderCategoryManager() {
   const list = document.getElementById('cat-manage-list');
-  if (!list) return;
-  list.innerHTML = FIXED_CATEGORIES.map(c => `
-    <span style="display:inline-flex;align-items:center;gap:4px;background:${c.color};color:#fff;font-size:0.7rem;font-weight:600;padding:0.2rem 0.65rem;border-radius:100px;font-family:'Pretendard',sans-serif;">
-      ${c.label}
-    </span>`).join('');
+  if (list) {
+    list.innerHTML = FIXED_CATEGORIES.map(c => `
+      <span style="display:inline-flex;align-items:center;gap:4px;background:${c.color};color:#fff;font-size:0.7rem;font-weight:600;padding:0.2rem 0.65rem;border-radius:100px;font-family:'Pretendard',sans-serif;">
+        ${c.label}
+      </span>`).join('');
+  }
   renderCatTagsSelect();
 }
 
