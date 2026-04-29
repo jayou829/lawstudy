@@ -507,7 +507,8 @@ let state = {
   choice:[], case:[], concept:[], memo:[],
   weekly: {0:[],1:[],2:[],3:[],4:[],5:[],6:[]},  // 요일별 [{start,end,subject,note,cat}]
   categories: [],      // [{id, label, color}]
-  doneHistory: {}      // { "YYYY-MM-DD": [{text, done, failed},...] }
+  doneHistory: {},     // { "YYYY-MM-DD": [{text, done, failed},...] }
+  lastCleared: ''       // "YYYY-MM-DD" - Firebase에 저장되는 마지막 정리 날짜
 };
 let saveTimer = null;
 let firstLoad = true;
@@ -525,6 +526,7 @@ onSnapshot(docRef, (snap) => {
     state.memo      = d.memo      || [];
     state.doneHistory = d.doneHistory || {};
     state.categories = d.categories || [];
+    state.lastCleared = d.lastCleared || "";
     // weekly: 키가 숫자 문자열로 저장될 수 있으므로 보정
     const w = d.weekly || {};
     for (let i=0;i<7;i++) state.weekly[i] = w[i] || w[String(i)] || [];
@@ -564,11 +566,8 @@ function autoClearDoneItems() {
   const base = new Date(now);
   const baseDateStr = `${base.getFullYear()}-${String(base.getMonth()+1).padStart(2,'0')}-${String(base.getDate()).padStart(2,'0')}`;
 
-  const lastKey = 'checklist_last_cleared';
-  const lastCleared = localStorage.getItem(lastKey) || '';
-
-  // 이미 오늘 기준일에 정리했으면 스킵
-  if (lastCleared === baseDateStr) return;
+  // 이미 오늘 기준일에 정리했으면 스킵 (Firebase에서 공유)
+  if (state.lastCleared === baseDateStr) return;
 
   const dateKey = baseDateStr;
 
@@ -584,11 +583,11 @@ function autoClearDoneItems() {
   const before = state.checklist.length;
   state.checklist = state.checklist.filter(item => !item.done && !item.failed);
   const removed = before - state.checklist.length;
+  state.lastCleared = baseDateStr; // Firebase에 저장되어 모든 브라우저에 공유됨
+  scheduleSave();
   if (removed > 0) {
-    scheduleSave();
     showToast(`✓ 완료/실패 ${removed}개가 기록으로 저장됐어요`);
   }
-  localStorage.setItem(lastKey, baseDateStr);
 }
 
 function scheduleSave() {
@@ -614,7 +613,8 @@ window.resetAllData = async () => {
     choice: [], case: [], concept: [], memo: [],
     weekly: {0:[],1:[],2:[],3:[],4:[],5:[],6:[]},
     categories: [],
-    doneHistory: {}
+    doneHistory: {},
+    lastCleared: ""
   };
   try {
     setSyncStatus('syncing', '저장 중...');
@@ -1692,7 +1692,7 @@ window.resetWeeklyData = () => {
 window.resetCalendarData = () => {
   if (!confirm('기록을 모두 초기화할까요?\n캘린더에 저장된 완료/실패 기록이 전부 삭제돼요.')) return;
   state.doneHistory = {};
-  localStorage.removeItem('checklist_last_cleared');
+  state.lastCleared = "";
   renderCalendar();
   document.getElementById('cl-record-list').innerHTML = '';
   scheduleSave();
