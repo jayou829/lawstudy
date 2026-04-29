@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>STUDY</title>
+<title>STUDY TRACKER</title>
 <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
 <style>
   :root {
@@ -401,6 +401,9 @@ onSnapshot(docRef, (snap) => {
     const w = d.weekly || {};
     for (let i=0;i<7;i++) state.weekly[i] = w[i] || w[String(i)] || [];
 
+    // ── 새벽 4시 이후 첫 접속 시 완료 항목 자동 삭제 ──
+    if (firstLoad) autoClearDoneItems();
+
     renderChecklist();
     renderLectures();
     TRACKER_KEYS.forEach(renderSection);
@@ -417,6 +420,30 @@ onSnapshot(docRef, (snap) => {
   setSyncStatus('error', '연결 오류');
   if (firstLoad) { firstLoad = false; document.getElementById('loadingOverlay').classList.add('hidden'); }
 });
+
+// ── 완료 항목 자동 삭제 (새벽 4시 기준) ──
+function autoClearDoneItems() {
+  const RESET_HOUR = 4; // 새벽 4시
+  const now = new Date();
+  // 오늘 새벽 4시 timestamp
+  const todayReset = new Date(now);
+  todayReset.setHours(RESET_HOUR, 0, 0, 0);
+
+  const lastKey = 'checklist_last_cleared';
+  const lastCleared = parseInt(localStorage.getItem(lastKey) || '0', 10);
+
+  // 마지막 삭제 시각이 오늘 새벽 4시보다 이전이고, 현재 시각이 오늘 새벽 4시 이후면 삭제
+  if (lastCleared < todayReset.getTime() && now >= todayReset) {
+    const before = state.checklist.length;
+    state.checklist = state.checklist.filter(item => !item.done);
+    const removed = before - state.checklist.length;
+    if (removed > 0) {
+      scheduleSave();
+      showToast(`✓ 완료된 할 일 ${removed}개가 자동 삭제됐어요`);
+    }
+    localStorage.setItem(lastKey, now.getTime().toString());
+  }
+}
 
 function scheduleSave() {
   setSyncStatus('syncing', '저장 중...');
@@ -757,7 +784,10 @@ function renderSection(type) {
             </div>
           </div>
         </div>
-        <span class="subject-chevron" style="margin-left:0.8rem;">▼</span>
+        <div style="display:flex;align-items:center;gap:0.3rem;margin-left:0.5rem;" onclick="event.stopPropagation()">
+          <button class="del-btn" style="opacity:0.6;font-size:0.7rem;padding:0.2rem 0.5rem;" onclick="delSubject('${type}',${gi})">삭제</button>
+        </div>
+        <span class="subject-chevron" style="margin-left:0.4rem;">▼</span>
       </div>
       <div class="items-list collapsed">
         <div class="item-row" style="background:var(--bg3);padding:0.4rem 1rem;border-bottom:1px solid var(--border);">
@@ -831,6 +861,14 @@ window.addSubject = (type) => {
   inp.value = '';
   renderSection(type); scheduleSave();
   showToast(`"${name}" 과목이 추가됐어요`);
+};
+
+window.delSubject = (type, gi) => {
+  const name = state[type][gi]?.name || '과목';
+  if (!confirm(`"${name}" 과목을 삭제할까요? 항목도 모두 사라져요.`)) return;
+  state[type].splice(gi, 1);
+  renderSection(type); renderTrackerOverview(); scheduleSave();
+  showToast(`"${name}" 과목이 삭제됐어요`);
 };
 
 // ── 요일별 시간표 ──
