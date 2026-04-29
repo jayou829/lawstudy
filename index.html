@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>STUDY TRACKER</title>
+<title>STUDY</title>
 <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
 <style>
   :root {
@@ -313,6 +313,7 @@
       <div class="lecture-add-row">
         <input class="add-input" id="lecture-name-input" placeholder="강의 이름 (예: 민법 기본강의)" style="flex:2;" />
         <input class="lec-count-input" id="lecture-count-input" type="number" min="1" max="300" placeholder="강의 수" />
+        <input class="add-input" id="lecture-subj-input" placeholder="과목명 (예: 민법)" style="flex:1;min-width:80px;" />
         <button class="add-btn" onclick="addLectureCourse()">+ 강의 추가</button>
       </div>
       <div id="lecture-courses"></div>
@@ -566,11 +567,12 @@ window.toggleTrackerViewMode = () => {
   if (isSubject) renderSubjectOverview();
 };
 
-// 전체 과목 목록 수집 (강의 제외, concept/memo/choice/case) - 과목명만 유니크하게
+// 전체 과목 목록 수집 (강의 포함, concept/memo/choice/case) - 과목명만 유니크하게
 function getAllSubjectNames() {
   const types = ['concept','memo','choice','case'];
   const names = new Set();
   types.forEach(t => (state[t]||[]).forEach(g => names.add(g.name)));
+  (state.lectures||[]).forEach(c => { if (c.subject) names.add(c.subject); });
   return [...names].sort();
 }
 
@@ -588,6 +590,14 @@ function renderSubjectOverview() {
   }
 
   grid.innerHTML = subjects.map(subj => {
+    // 강의: 같은 과목으로 태깅된 것들
+    const lecRows = (state.lectures||[]).filter(c => c.subject === subj).map(c => {
+      const total = c.total || 0;
+      const doneCnt = (c.done||[]).filter(Boolean).length;
+      const pct = total ? Math.round(doneCnt/total*100) : 0;
+      return { typeName: '강의', book: c.name, pct1: pct, pct2: 0, done1: doneCnt, total };
+    });
+
     // 각 타입별로 같은 과목명의 그룹을 모두 수집
     const rows = [];
     types.forEach(t => {
@@ -602,9 +612,10 @@ function renderSubjectOverview() {
       });
     });
 
-    if (rows.length === 0) return '';
+    if (rows.length === 0 && lecRows.length === 0) return '';
 
-    const rowsHtml = rows.map(r => {
+    const allRows = [...lecRows, ...rows];
+    const rowsHtml = allRows.map(r => {
       const label = r.book
         ? `<span style="font-size:0.62rem;color:var(--text3);">${r.typeName}</span><span style="font-size:0.6rem;color:var(--text3);margin-left:3px;opacity:0.7;">${r.book}</span>`
         : `<span style="font-size:0.62rem;color:var(--text3);">${r.typeName}</span>`;
@@ -647,6 +658,31 @@ window.showSubjectDetail = (subj) => {
   const types = ['concept','memo','choice','case'];
   const typeNames = { concept:'개념서', memo:'암기장', choice:'선택형', case:'사례형' };
   const content = document.getElementById('subject-detail-content');
+
+  // 강의: 같은 과목으로 태깅된 것들
+  (state.lectures||[]).forEach((course, ci) => {
+    if (course.subject !== subj) return;
+    const total = course.total || 0;
+    const doneCnt = (course.done||[]).filter(Boolean).length;
+    const pct = total ? Math.round(doneCnt/total*100) : 0;
+    blocks.push(`<div class="subject-detail-type">
+      <div class="subject-detail-type-header" onclick="this.nextElementSibling.classList.toggle('collapsed')">
+        <span>강의 <span style="font-size:0.72rem;color:var(--text3);font-weight:400;">${course.name}</span></span>
+        <div style="display:flex;align-items:center;gap:0.5rem;">
+          <span class="subject-detail-badge">${doneCnt}/${total}강 (${pct}%)</span>
+          <span style="font-size:0.65rem;color:var(--text3);">▼</span>
+        </div>
+      </div>
+      <div class="items-list">
+        <div style="padding:0.7rem 1rem;display:flex;flex-wrap:wrap;gap:6px;">
+          ${Array.from({length:total},(_,k)=>{
+            const done = (course.done||[])[k];
+            return `<div class="lecture-dot ${done?'done':''}" onclick="toggleLectureDot(${ci},${k});showSubjectDetail('${subj.replace(/'/g,"\\'")}')" style="width:32px;height:32px;font-size:0.58rem;">${k+1}</div>`;
+          }).join('')}
+        </div>
+      </div>
+    </div>`);
+  });
 
   // 각 타입별로 같은 과목의 그룹을 모두 수집 (책 여러 권 지원)
   const blocks = [];
@@ -894,6 +930,7 @@ function renderLectures() {
           <div class="lecture-course-name" style="margin-bottom:0.4rem;">
             ${course.name}
             <span class="lecture-course-badge">${doneCnt}/${total}</span>
+            ${course.subject ? `<span style="font-size:0.68rem;color:var(--text3);font-weight:400;background:var(--bg2);border:1px solid var(--border);border-radius:100px;padding:0.1rem 0.45rem;margin-left:2px;">${course.subject}</span>` : ''}
           </div>
           <div style="display:flex;align-items:center;gap:0.5rem;">
             <span style="font-family: 'Pretendard', sans-serif;font-size:0.62rem;color:var(--gold);width:28px;">${pct}%</span>
@@ -917,11 +954,14 @@ function renderLectures() {
 window.addLectureCourse = () => {
   const nameInp = document.getElementById('lecture-name-input');
   const countInp = document.getElementById('lecture-count-input');
+  const subjInp = document.getElementById('lecture-subj-input');
   const name = nameInp.value.trim();
   const total = parseInt(countInp.value) || 0;
+  const subject = subjInp ? subjInp.value.trim() : '';
   if (!name || total < 1) { showToast('강의 이름과 강의 수를 입력해 주세요'); return; }
-  state.lectures.push({ name, total, done: Array(total).fill(false) });
+  state.lectures.push({ name, total, done: Array(total).fill(false), subject });
   nameInp.value = ''; countInp.value = '';
+  if (subjInp) subjInp.value = '';
   renderLectures(); scheduleSave();
   showToast(`"${name}" (${total}강) 추가됐어요`);
 };
