@@ -171,6 +171,10 @@
   .cl-del:hover { color: var(--red); background: rgba(192,57,43,0.1); }
   .cl-add-row { display: flex; gap: 0.6rem; margin-top: 0.8rem; }
   .cl-stats { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+  .cl-time-input { width: 72px; background: var(--bg3); border: 1px solid var(--border); border-radius: 5px; padding: 0.2rem 0.4rem; font-size: 0.72rem; color: var(--text); font-family: 'Pretendard', sans-serif; outline: none; text-align: center; transition: border-color 0.2s; }
+  .cl-time-input:focus { border-color: var(--gold); }
+  .cl-time-label { font-size: 0.68rem; color: var(--text3); white-space: nowrap; }
+  .cl-total-time-chip { font-family: 'Pretendard', sans-serif; font-size: 0.72rem; color: var(--gold); background: var(--gold-dim); border: 1px solid var(--gold); border-radius: 100px; padding: 0.25rem 0.75rem; }
   .cl-stat-chip { font-family: 'Pretendard', sans-serif; font-size: 0.72rem; color: var(--text2); background: var(--bg3); border: 1px solid var(--border); border-radius: 100px; padding: 0.25rem 0.75rem; }
   .cl-stat-chip.done-chip { color: var(--green2); border-color: var(--green2); background: var(--green-dim); }
   .cl-date-badge { font-size: 0.75rem; color: var(--text3); font-family: 'Pretendard', sans-serif; }
@@ -293,6 +297,7 @@
         <div class="cl-stat-chip" id="cl-total-chip">총 0개</div>
         <div class="cl-stat-chip done-chip" id="cl-done-chip">완료 0개</div>
         <div class="cl-stat-chip cl-fail-chip" id="cl-fail-chip">실패 0개</div>
+        <div class="cl-total-time-chip" id="cl-time-chip">⏱ 00:00</div>
       </div>
       <div class="checklist-wrap" id="checklist-container"></div>
       <div class="cl-add-row">
@@ -423,14 +428,9 @@
     <!-- 카테고리 관리 -->
     <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:0.85rem 1rem;margin-bottom:1rem;">
       <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.6rem;">
-        <span style="font-size:0.75rem;font-weight:600;color:var(--text2);">카테고리 관리</span>
+        <span style="font-size:0.75rem;font-weight:600;color:var(--text2);">카테고리</span>
       </div>
-      <div class="cat-tags-row" id="cat-manage-list" style="margin-bottom:0.65rem;"></div>
-      <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
-        <input class="add-input" id="cat-name-input" placeholder="카테고리 이름" style="flex:1;min-width:100px;font-size:0.78rem;padding:0.4rem 0.75rem;" maxlength="10" onkeydown="if(event.key==='Enter')addCategory()" />
-        <div id="cat-color-palette" style="display:flex;gap:5px;flex-wrap:wrap;"></div>
-        <button class="add-btn" onclick="addCategory()" style="font-size:0.75rem;padding:0.4rem 0.8rem;">+ 추가</button>
-      </div>
+      <div class="cat-tags-row" id="cat-manage-list" style="margin-bottom:0;"></div>
     </div>
     
     <div class="week-tabs" id="weekTabs">
@@ -929,6 +929,22 @@ function renderTrackerOverview() {
 }
 
 // ── 체크리스트 ──
+function calcTotalStudyTime(items) {
+  let totalMins = 0;
+  items.forEach(item => {
+    const t = (item.studyTime || '').trim();
+    if (/^\d{1,2}:\d{2}$/.test(t)) {
+      const [h, m] = t.split(':').map(Number);
+      totalMins += h * 60 + m;
+    } else if (/^\d+$/.test(t)) {
+      totalMins += parseInt(t);
+    }
+  });
+  const hh = String(Math.floor(totalMins / 60)).padStart(2, '0');
+  const mm = String(totalMins % 60).padStart(2, '0');
+  return `${hh}:${mm}`;
+}
+
 function renderChecklist() {
   const items = state.checklist || [];
   const container = document.getElementById('checklist-container');
@@ -939,6 +955,7 @@ function renderChecklist() {
   document.getElementById('cl-total-chip').textContent = `총 ${total}개`;
   document.getElementById('cl-done-chip').textContent = `완료 ${done}개`;
   document.getElementById('cl-fail-chip').textContent = `실패 ${failed}개`;
+  document.getElementById('cl-time-chip').textContent = `⏱ ${calcTotalStudyTime(items)}`;
 
   if (total === 0) {
     container.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--text3);font-size:0.82rem;">아직 할 일이 없어요. 추가해 보세요 ✏️</div>';
@@ -952,6 +969,9 @@ function renderChecklist() {
     <div class="checklist-item ${rowClass}">
       <div class="cl-checkbox ${cbClass}" onclick="toggleCheckItem(${i})">${cbIcon}</div>
       <span class="cl-text">${item.text}</span>
+      <span class="cl-time-label">⏱</span>
+      <input class="cl-time-input" type="text" placeholder="hh:mm" value="${item.studyTime||''}" maxlength="5" inputmode="numeric"
+        onchange="setStudyTime(${i}, this.value)" onclick="event.stopPropagation()" title="공부 시간 입력 (hh:mm)" />
       <button class="cl-fail-btn" onclick="toggleFailItem(${i})" title="실패" style="background:none;border:none;cursor:pointer;font-size:0.75rem;padding:0.2rem 0.4rem;border-radius:4px;color:${item.failed?'var(--red)':'var(--text3)'};opacity:0;transition:all 0.2s;">✕</button>
       <button class="cl-del" onclick="delCheckItem(${i})">🗑</button>
     </div>`;
@@ -967,10 +987,26 @@ window.addCheckItem = () => {
   const inp = document.getElementById('cl-input');
   const text = inp.value.trim();
   if (!text) return;
-  state.checklist.push({ text, done: false, failed: false });
+  state.checklist.push({ text, done: false, failed: false, studyTime: '' });
   inp.value = '';
   renderChecklist(); scheduleSave();
   showToast('할 일이 추가됐어요');
+};
+
+window.setStudyTime = (i, val) => {
+  // hh:mm 형식 정규화
+  const v = val.trim();
+  let normalized = v;
+  if (/^\d{3,4}$/.test(v)) {
+    const h = v.length === 3 ? v.slice(0,1) : v.slice(0,2);
+    const m = v.length === 3 ? v.slice(1) : v.slice(2);
+    normalized = `${String(parseInt(h)).padStart(2,'0')}:${String(parseInt(m)).padStart(2,'0')}`;
+  } else if (/^\d{1,2}$/.test(v)) {
+    normalized = `${String(parseInt(v)).padStart(2,'0')}:00`;
+  }
+  state.checklist[i].studyTime = normalized;
+  document.getElementById('cl-time-chip').textContent = `⏱ ${calcTotalStudyTime(state.checklist)}`;
+  scheduleSave();
 };
 
 window.toggleCheckItem = (i) => {
@@ -1048,7 +1084,25 @@ function renderCalendar() {
       isToday ? 'today-cal' : '',
       isSelected ? 'selected' : ''
     ].filter(Boolean).join(' ');
-    html += `<div class="${cls}" onclick="selectCalDate('${dateKey}')"><span class="day-num">${d}</span></div>`;
+    // 공부 시간 합계
+    let timeLabel = '';
+    if (hasRecord) {
+      const dayItems = history[dateKey] || [];
+      let totalMins = 0;
+      dayItems.forEach(item => {
+        const t = (item.studyTime || '').trim();
+        if (/^\d{1,2}:\d{2}$/.test(t)) {
+          const [h, m] = t.split(':').map(Number);
+          totalMins += h * 60 + m;
+        }
+      });
+      if (totalMins > 0) {
+        const hh = String(Math.floor(totalMins / 60)).padStart(2,'0');
+        const mm = String(totalMins % 60).padStart(2,'0');
+        timeLabel = `<span style="font-size:0.52rem;color:var(--gold);font-family:'Pretendard',sans-serif;line-height:1;opacity:0.85;">${hh}:${mm}</span>`;
+      }
+    }
+    html += `<div class="${cls}" onclick="selectCalDate('${dateKey}')"><span class="day-num">${d}</span>${timeLabel}</div>`;
   }
   document.getElementById('cl-cal-days').innerHTML = html;
   renderCalRecord(calSelectedDate);
@@ -1368,78 +1422,32 @@ window.delSubject = (type, gi) => {
   showToast(`"${name}" 과목이 삭제됐어요`);
 };
 
-// ── 카테고리 (사용자 정의) ──
-const CAT_PALETTE = ['#b5936a','#8e7bbf','#6aab7a'];
-let selectedCat = null;    // 추가 폼에서 선택된 카테고리 id
-let selectedCatColor = CAT_PALETTE[0]; // 새 카테고리 색상 선택
+// ── 카테고리 (고정: 개인 / 학교 / 학습) ──
+const FIXED_CATEGORIES = [
+  { id: 'cat_personal', label: '개인', color: '#b5936a' },
+  { id: 'cat_school',   label: '학교', color: '#8e7bbf' },
+  { id: 'cat_study',    label: '학습', color: '#6aab7a' },
+];
 
-function getCat(id) { return (state.categories||[]).find(c => c.id === id); }
+let selectedCat = null;
+
+// 항상 고정 카테고리 사용
+function getCat(id) { return FIXED_CATEGORIES.find(c => c.id === id); }
 
 function renderCategoryManager() {
   const list = document.getElementById('cat-manage-list');
-  const palette = document.getElementById('cat-color-palette');
-  if (!list || !palette) return;
-
-  // 카테고리 목록
-  const cats = state.categories || [];
-  list.innerHTML = cats.length === 0
-    ? `<span style="font-size:0.72rem;color:var(--text3);">아직 카테고리가 없어요</span>`
-    : cats.map((c, i) => `
-        <span style="display:inline-flex;align-items:center;gap:4px;background:${c.color};color:#fff;font-size:0.7rem;font-weight:600;padding:0.2rem 0.55rem 0.2rem 0.65rem;border-radius:100px;font-family:'Pretendard',sans-serif;">
-          ${c.label}
-          <span onclick="delCategory(${i})" style="cursor:pointer;opacity:0.75;font-size:0.65rem;margin-left:2px;" title="삭제">✕</span>
-        </span>`).join('');
-
-  // 색상 팔레트
-  palette.innerHTML = CAT_PALETTE.map(color => `
-    <div onclick="selectCatColor('${color}')"
-      style="width:18px;height:18px;border-radius:50%;background:${color};cursor:pointer;flex-shrink:0;
-             box-shadow:${selectedCatColor===color?'0 0 0 2px #fff,0 0 0 3.5px '+color:'none'};transition:box-shadow 0.15s;">
-    </div>`).join('');
-
-  // 추가 폼의 카테고리 선택 태그도 갱신
+  if (!list) return;
+  list.innerHTML = FIXED_CATEGORIES.map(c => `
+    <span style="display:inline-flex;align-items:center;gap:4px;background:${c.color};color:#fff;font-size:0.7rem;font-weight:600;padding:0.2rem 0.65rem;border-radius:100px;font-family:'Pretendard',sans-serif;">
+      ${c.label}
+    </span>`).join('');
   renderCatTagsSelect();
 }
-
-window.selectCatColor = (color) => {
-  selectedCatColor = color;
-  renderCategoryManager();
-};
-
-window.addCategory = () => {
-  const inp = document.getElementById('cat-name-input');
-  const label = inp.value.trim();
-  if (!label) { showToast('카테고리 이름을 입력해 주세요'); return; }
-  if ((state.categories||[]).find(c => c.label === label)) { showToast('같은 이름의 카테고리가 있어요'); return; }
-  const id = 'cat_' + Date.now();
-  if (!state.categories) state.categories = [];
-  state.categories.push({ id, label, color: selectedCatColor });
-  inp.value = '';
-  // 다음 색상으로 자동 이동
-  const nextIdx = (CAT_PALETTE.indexOf(selectedCatColor) + 1) % CAT_PALETTE.length;
-  selectedCatColor = CAT_PALETTE[nextIdx];
-  renderCategoryManager();
-  scheduleSave();
-  showToast(`"${label}" 카테고리가 추가됐어요`);
-};
-
-window.delCategory = (i) => {
-  const label = state.categories[i]?.label;
-  state.categories.splice(i, 1);
-  if (selectedCat === (state.categories[i]?.id)) selectedCat = null;
-  renderCategoryManager();
-  scheduleSave();
-  showToast(`"${label}" 카테고리가 삭제됐어요`);
-};
 
 function renderCatTagsSelect() {
   const wrap = document.getElementById('cat-tags-select');
   if (!wrap) return;
-  const cats = state.categories || [];
-  if (cats.length === 0) {
-    wrap.innerHTML = `<span style="font-size:0.72rem;color:var(--text3);">위에서 카테고리를 먼저 추가해 주세요</span>`;
-    return;
-  }
+  const cats = FIXED_CATEGORIES;
   wrap.innerHTML = cats.map(c => {
     const isActive = selectedCat === c.id;
     return `<span class="cat-tag ${isActive ? 'active' : ''}"
@@ -1482,7 +1490,7 @@ function renderWeekDay(dayIdx) {
     container.innerHTML = `<div class="timetable-empty">${DAY_NAMES[dayIdx]}요일 일정이 없어요. 위에서 추가해 보세요 📋</div>`;
     return;
   }
-  const cats = state.categories || [];
+  const cats = FIXED_CATEGORIES;
   container.innerHTML = blocks.map((block, bi) => {
     const cat = getCat(block.cat);
     const catBadge = cat
