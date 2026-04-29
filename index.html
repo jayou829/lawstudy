@@ -263,6 +263,7 @@
   <button class="nav-btn active" onclick="showSection('checklist',this)">✅</button>
   <button class="nav-btn" onclick="showSection('tracker',this)">📊</button>
   <button class="nav-btn" onclick="showSection('daily',this)">🗓️</button>
+  <button class="nav-btn" onclick="showSection('calendar',this)">📅</button>
 </nav>
 
 <main>
@@ -275,7 +276,6 @@
       </div>
       <div style="display:flex;align-items:center;gap:0.8rem;">
         <div class="cl-date-badge" id="cl-date-badge"></div>
-        <button class="add-btn" id="cl-cal-btn" onclick="toggleCalendarView()" style="font-size:0.72rem;padding:0.35rem 0.8rem;">📅</button>
         <button class="add-btn" id="cl-view-toggle" onclick="toggleChecklistView()" style="font-size:0.72rem;padding:0.35rem 0.8rem;">🗓️</button>
       </div>
     </div>
@@ -295,23 +295,6 @@
     <!-- 시간표 뷰 -->
     <div id="cl-view-timetable" style="display:none;">
       <div id="cl-timetable-content"></div>
-    </div>
-    <!-- 완료 기록 캘린더 뷰 -->
-    <div id="cl-view-calendar" style="display:none;">
-      <div class="cl-calendar-wrap">
-        <div class="cl-cal-header">
-          <button class="cl-cal-nav" onclick="calNavMonth(-1)">‹</button>
-          <div class="cl-cal-title" id="cl-cal-month-title"></div>
-          <button class="cl-cal-nav" onclick="calNavMonth(1)">›</button>
-        </div>
-        <div class="cl-cal-grid" id="cl-cal-dow-row">
-          <div class="cl-cal-dow">일</div><div class="cl-cal-dow">월</div><div class="cl-cal-dow">화</div>
-          <div class="cl-cal-dow">수</div><div class="cl-cal-dow">목</div><div class="cl-cal-dow">금</div>
-          <div class="cl-cal-dow">토</div>
-        </div>
-        <div class="cl-cal-grid" id="cl-cal-days"></div>
-        <div class="cl-record-list" id="cl-record-list"></div>
-      </div>
     </div>
   </div>
 
@@ -446,6 +429,27 @@
     <div id="timetable-container"></div>
   </div>
 
+  <!-- ── 완료 기록 캘린더 ── -->
+  <div class="section" id="section-calendar">
+    <div class="section-header">
+      <div class="section-title">📅 완료 기록</div>
+    </div>
+    <div class="cl-calendar-wrap">
+      <div class="cl-cal-header">
+        <button class="cl-cal-nav" onclick="calNavMonth(-1)">‹</button>
+        <div class="cl-cal-title" id="cl-cal-month-title"></div>
+        <button class="cl-cal-nav" onclick="calNavMonth(1)">›</button>
+      </div>
+      <div class="cl-cal-grid">
+        <div class="cl-cal-dow">일</div><div class="cl-cal-dow">월</div><div class="cl-cal-dow">화</div>
+        <div class="cl-cal-dow">수</div><div class="cl-cal-dow">목</div><div class="cl-cal-dow">금</div>
+        <div class="cl-cal-dow">토</div>
+      </div>
+      <div class="cl-cal-grid" id="cl-cal-days"></div>
+      <div class="cl-record-list" id="cl-record-list"></div>
+    </div>
+  </div>
+
 </main>
 
 <div class="toast" id="toast"></div>
@@ -578,6 +582,12 @@ window.showSection = (id, btn) => {
   document.getElementById('section-' + id).classList.add('active');
   btn.classList.add('active');
   if (id === 'tracker') renderTrackerOverview();
+  if (id === 'calendar') {
+    const now = new Date();
+    calYear = now.getFullYear(); calMonth = now.getMonth();
+    calSelectedDate = null;
+    renderCalendar();
+  }
 };
 
 // ── 진도표 내부 네비게이션 ──
@@ -714,6 +724,9 @@ window.showSubjectDetail = (subj) => {
   const typeNames = { concept:'개념서', memo:'암기장', choice:'선택형', case:'사례형' };
   const content = document.getElementById('subject-detail-content');
 
+  // 각 타입별로 같은 과목의 그룹을 모두 수집 (책 여러 권 지원)
+  const blocks = [];
+
   // 강의: 같은 과목으로 태깅된 것들
   (state.lectures||[]).forEach((course, ci) => {
     if (course.subject !== subj) return;
@@ -739,8 +752,7 @@ window.showSubjectDetail = (subj) => {
     </div>`);
   });
 
-  // 각 타입별로 같은 과목의 그룹을 모두 수집 (책 여러 권 지원)
-  const blocks = [];
+  // 타입별 그룹 수집
   types.forEach(t => {
     const groups = (state[t]||[]).filter(g => g.name === subj);
     groups.forEach(group => {
@@ -909,13 +921,12 @@ window.delCheckItem = (i) => {
 };
 
 // ── 오늘 할 일 ↔ 시간표 전환 ──
-let clViewMode = 'checklist'; // 'checklist' | 'timetable' | 'calendar'
+let clViewMode = 'checklist'; // 'checklist' | 'timetable'
 let calYear, calMonth, calSelectedDate;
 
 function setClView(mode) {
   document.getElementById('cl-view-checklist').style.display = mode === 'checklist' ? 'block' : 'none';
   document.getElementById('cl-view-timetable').style.display = mode === 'timetable' ? 'block' : 'none';
-  document.getElementById('cl-view-calendar').style.display  = mode === 'calendar'  ? 'block' : 'none';
   clViewMode = mode;
 }
 
@@ -927,21 +938,6 @@ window.toggleChecklistView = () => {
   } else {
     setClView('checklist');
     document.getElementById('cl-view-toggle').textContent = '🗓️';
-  }
-};
-
-window.toggleCalendarView = () => {
-  if (clViewMode !== 'calendar') {
-    const now = new Date();
-    calYear = now.getFullYear(); calMonth = now.getMonth();
-    calSelectedDate = null;
-    setClView('calendar');
-    document.getElementById('cl-cal-btn').textContent = '✅';
-    document.getElementById('cl-view-toggle').textContent = '🗓️';
-    renderCalendar();
-  } else {
-    setClView('checklist');
-    document.getElementById('cl-cal-btn').textContent = '📅';
   }
 };
 
