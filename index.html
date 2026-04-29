@@ -122,6 +122,13 @@
   .week-tab.active { background: var(--gold); border-color: var(--gold); color: #fff; }
   .week-tab.today { border-color: var(--gold2); }
 
+  /* 카테고리 태그 */
+  .cat-tags-row { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0.5rem; }
+  .cat-tag { font-size: 0.7rem; font-family: 'Pretendard', sans-serif; font-weight: 500; padding: 0.2rem 0.65rem; border-radius: 100px; border: 1.5px solid var(--border); background: var(--bg3); color: var(--text2); cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+  .cat-tag:hover { border-color: var(--gold); color: var(--gold); }
+  .cat-tag.active { color: #fff; border-color: transparent; }
+  .block-cat-badge { font-size: 0.65rem; font-family: 'Pretendard', sans-serif; font-weight: 600; padding: 0.15rem 0.55rem; border-radius: 100px; color: #fff; flex-shrink: 0; }
+
   .time-block { background: var(--card); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 0.85rem; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
   .time-block-header { display: flex; align-items: center; padding: 0.7rem 1.1rem; background: var(--bg3); border-bottom: 1px solid var(--border); gap: 0.8rem; flex-wrap: wrap; }
   .time-label { font-family: 'Pretendard', sans-serif; font-size: 0.8rem; color: var(--gold); min-width: 110px; font-weight: 500; }
@@ -408,7 +415,23 @@
 
   <!-- ── 요일별 시간표 ── -->
   <div class="section" id="section-daily">
-    <div class="section-header"><div><div class="section-title">🕐 시간표</div></div></div>
+    <div class="section-header">
+      <div><div class="section-title">🕐 시간표</div></div>
+      <button onclick="resetWeeklyData()" style="background:none;border:1px solid var(--border);color:var(--text3);border-radius:6px;padding:0.25rem 0.65rem;font-size:0.7rem;font-family:'Pretendard',sans-serif;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.borderColor='var(--red)';this.style.color='var(--red)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text3)'">시간표 초기화</button>
+    </div>
+
+    <!-- 카테고리 관리 -->
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:0.85rem 1rem;margin-bottom:1rem;">
+      <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.6rem;">
+        <span style="font-size:0.75rem;font-weight:600;color:var(--text2);">카테고리 관리</span>
+      </div>
+      <div class="cat-tags-row" id="cat-manage-list" style="margin-bottom:0.65rem;"></div>
+      <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
+        <input class="add-input" id="cat-name-input" placeholder="카테고리 이름" style="flex:1;min-width:100px;font-size:0.78rem;padding:0.4rem 0.75rem;" maxlength="10" onkeydown="if(event.key==='Enter')addCategory()" />
+        <div id="cat-color-palette" style="display:flex;gap:5px;flex-wrap:wrap;"></div>
+        <button class="add-btn" onclick="addCategory()" style="font-size:0.75rem;padding:0.4rem 0.8rem;">+ 추가</button>
+      </div>
+    </div>
     
     <div class="week-tabs" id="weekTabs">
       <button class="week-tab" onclick="selectWeekDay(0,this)">월</button>
@@ -419,12 +442,18 @@
       <button class="week-tab" onclick="selectWeekDay(5,this)">토</button>
       <button class="week-tab" onclick="selectWeekDay(6,this)">일</button>
     </div>
-    <div class="add-time-row">
-      <input class="time-input" id="time-start" type="text" placeholder="0900" maxlength="5" inputmode="numeric" style="width:72px;text-align:center;" />
-      <span>~</span>
-      <input class="time-input" id="time-end" type="text" placeholder="1000" maxlength="5" inputmode="numeric" style="width:72px;text-align:center;" />
-      <input class="add-input" id="time-subject" placeholder="과목 / 내용" style="flex:1;min-width:120px;" />
-      <button class="add-btn" onclick="addTimeBlock()">+ 추가</button>
+    <div class="add-time-row" style="flex-direction:column;align-items:stretch;gap:0.7rem;">
+      <div style="display:flex;gap:0.6rem;align-items:center;flex-wrap:wrap;">
+        <input class="time-input" id="time-start" type="text" placeholder="0900" maxlength="5" inputmode="numeric" style="width:72px;text-align:center;" />
+        <span style="color:var(--text3);font-size:0.8rem;">~</span>
+        <input class="time-input" id="time-end" type="text" placeholder="1000" maxlength="5" inputmode="numeric" style="width:72px;text-align:center;" />
+        <input class="add-input" id="time-subject" placeholder="과목 / 내용" style="flex:1;min-width:120px;" />
+        <button class="add-btn" onclick="addTimeBlock()">+ 추가</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+        <span style="font-size:0.72rem;color:var(--text3);flex-shrink:0;">카테고리</span>
+        <div class="cat-tags-row" id="cat-tags-select" style="margin-bottom:0;flex:1;"></div>
+      </div>
     </div>
     
     <div id="timetable-container"></div>
@@ -478,7 +507,8 @@ let state = {
   checklist: [],       // [{text, done}]
   lectures: [],        // [{name, total, done:[bool,...]}]
   choice:[], case:[], concept:[], memo:[],
-  weekly: {0:[],1:[],2:[],3:[],4:[],5:[],6:[]},  // 요일별 [{start,end,subject,note}]
+  weekly: {0:[],1:[],2:[],3:[],4:[],5:[],6:[]},  // 요일별 [{start,end,subject,note,cat}]
+  categories: [],      // [{id, label, color}]
   doneHistory: {}      // { "YYYY-MM-DD": [{text, done, failed},...] }
 };
 let saveTimer = null;
@@ -496,6 +526,7 @@ onSnapshot(docRef, (snap) => {
     state.concept   = d.concept   || [];
     state.memo      = d.memo      || [];
     state.doneHistory = d.doneHistory || {};
+    state.categories = d.categories || [];
     // weekly: 키가 숫자 문자열로 저장될 수 있으므로 보정
     const w = d.weekly || {};
     for (let i=0;i<7;i++) state.weekly[i] = w[i] || w[String(i)] || [];
@@ -508,6 +539,7 @@ onSnapshot(docRef, (snap) => {
     TRACKER_KEYS.forEach(renderSection);
     renderWeekDay(currentWeekDay);
     renderTrackerOverview();
+    renderCategoryManager();
   }
   if (firstLoad) {
     firstLoad = false;
@@ -578,6 +610,7 @@ window.resetAllData = async () => {
     lectures: [],
     choice: [], case: [], concept: [], memo: [],
     weekly: {0:[],1:[],2:[],3:[],4:[],5:[],6:[]},
+    categories: [],
     doneHistory: {}
   };
   try {
@@ -592,6 +625,7 @@ window.resetAllData = async () => {
     renderWeekDay(currentWeekDay);
     renderTrackerOverview();
     renderCalendar();
+    renderCategoryManager();
     showToast('✓ 모든 데이터가 초기화됐어요');
   } catch(e) {
     setSyncStatus('error', '저장 실패');
@@ -1067,10 +1101,13 @@ function renderTodayTimetable() {
   container.innerHTML = `<div style="font-size:0.75rem;color:var(--text2);margin-bottom:0.8rem;font-family: 'Pretendard', sans-serif;">${dayNames[todayIdx]}요일 시간표 · 현재 ${currentTime}</div>` +
     blocks.map(block => {
       const isCurrent = block.start <= currentTime && currentTime < block.end;
+      const cat = getCat(block.cat);
+      const catBadge = cat ? `<span class="block-cat-badge" style="background:${cat.color};">${cat.label}</span>` : '';
       return `<div class="time-block" style="${isCurrent ? 'border-color:var(--gold);box-shadow:0 0 0 2px rgba(139,105,20,0.15);' : ''}">
         <div class="time-block-header" style="${isCurrent ? 'background:var(--gold-dim);' : ''}">
           <span class="time-label">${block.start} ~ ${block.end}</span>
           ${isCurrent ? '<span style="font-size:0.68rem;color:var(--gold);font-family:\'Pretendard\',sans-serif;font-weight:600;">▶ 지금</span>' : ''}
+          ${catBadge}
           <span style="flex:1;font-size:0.82rem;color:var(--text);padding:0 0.4rem;">${block.subject || ''}</span>
         </div>
         ${block.note ? `<div class="time-block-body"><div class="time-note">${block.note}</div></div>` : ''}
@@ -1331,6 +1368,91 @@ window.delSubject = (type, gi) => {
   showToast(`"${name}" 과목이 삭제됐어요`);
 };
 
+// ── 카테고리 (사용자 정의) ──
+const CAT_PALETTE = ['#8b6914','#6d4c9e','#2e7d32','#1565c0','#c0392b','#5d7a8a','#b84c00','#00796b','#6a1b9a','#ad1457'];
+let selectedCat = null;    // 추가 폼에서 선택된 카테고리 id
+let selectedCatColor = CAT_PALETTE[0]; // 새 카테고리 색상 선택
+
+function getCat(id) { return (state.categories||[]).find(c => c.id === id); }
+
+function renderCategoryManager() {
+  const list = document.getElementById('cat-manage-list');
+  const palette = document.getElementById('cat-color-palette');
+  if (!list || !palette) return;
+
+  // 카테고리 목록
+  const cats = state.categories || [];
+  list.innerHTML = cats.length === 0
+    ? `<span style="font-size:0.72rem;color:var(--text3);">아직 카테고리가 없어요</span>`
+    : cats.map((c, i) => `
+        <span style="display:inline-flex;align-items:center;gap:4px;background:${c.color};color:#fff;font-size:0.7rem;font-weight:600;padding:0.2rem 0.55rem 0.2rem 0.65rem;border-radius:100px;font-family:'Pretendard',sans-serif;">
+          ${c.label}
+          <span onclick="delCategory(${i})" style="cursor:pointer;opacity:0.75;font-size:0.65rem;margin-left:2px;" title="삭제">✕</span>
+        </span>`).join('');
+
+  // 색상 팔레트
+  palette.innerHTML = CAT_PALETTE.map(color => `
+    <div onclick="selectCatColor('${color}')"
+      style="width:18px;height:18px;border-radius:50%;background:${color};cursor:pointer;flex-shrink:0;
+             box-shadow:${selectedCatColor===color?'0 0 0 2px #fff,0 0 0 3.5px '+color:'none'};transition:box-shadow 0.15s;">
+    </div>`).join('');
+
+  // 추가 폼의 카테고리 선택 태그도 갱신
+  renderCatTagsSelect();
+}
+
+window.selectCatColor = (color) => {
+  selectedCatColor = color;
+  renderCategoryManager();
+};
+
+window.addCategory = () => {
+  const inp = document.getElementById('cat-name-input');
+  const label = inp.value.trim();
+  if (!label) { showToast('카테고리 이름을 입력해 주세요'); return; }
+  if ((state.categories||[]).find(c => c.label === label)) { showToast('같은 이름의 카테고리가 있어요'); return; }
+  const id = 'cat_' + Date.now();
+  if (!state.categories) state.categories = [];
+  state.categories.push({ id, label, color: selectedCatColor });
+  inp.value = '';
+  // 다음 색상으로 자동 이동
+  const nextIdx = (CAT_PALETTE.indexOf(selectedCatColor) + 1) % CAT_PALETTE.length;
+  selectedCatColor = CAT_PALETTE[nextIdx];
+  renderCategoryManager();
+  scheduleSave();
+  showToast(`"${label}" 카테고리가 추가됐어요`);
+};
+
+window.delCategory = (i) => {
+  const label = state.categories[i]?.label;
+  state.categories.splice(i, 1);
+  if (selectedCat === (state.categories[i]?.id)) selectedCat = null;
+  renderCategoryManager();
+  scheduleSave();
+  showToast(`"${label}" 카테고리가 삭제됐어요`);
+};
+
+function renderCatTagsSelect() {
+  const wrap = document.getElementById('cat-tags-select');
+  if (!wrap) return;
+  const cats = state.categories || [];
+  if (cats.length === 0) {
+    wrap.innerHTML = `<span style="font-size:0.72rem;color:var(--text3);">위에서 카테고리를 먼저 추가해 주세요</span>`;
+    return;
+  }
+  wrap.innerHTML = cats.map(c => {
+    const isActive = selectedCat === c.id;
+    return `<span class="cat-tag ${isActive ? 'active' : ''}"
+      style="${isActive ? `background:${c.color};border-color:${c.color};` : ''}"
+      onclick="selectCat('${c.id}')">${c.label}</span>`;
+  }).join('') + `<span class="cat-tag" onclick="selectCat(null)" style="${!selectedCat?'border-color:var(--text3);color:var(--text3);':''}" title="없음">없음</span>`;
+}
+
+window.selectCat = (id) => {
+  selectedCat = selectedCat === id ? null : id;
+  renderCatTagsSelect();
+};
+
 // ── 요일별 시간표 ──
 function initWeekTabs() {
   const now = new Date();
@@ -1342,6 +1464,7 @@ function initWeekTabs() {
     tab.classList.remove('active');
     if (i === todayIdx) tab.classList.add('today', 'active');
   });
+  renderCategoryManager();
 }
 
 window.selectWeekDay = (dayIdx, btn) => {
@@ -1359,17 +1482,32 @@ function renderWeekDay(dayIdx) {
     container.innerHTML = `<div class="timetable-empty">${DAY_NAMES[dayIdx]}요일 일정이 없어요. 위에서 추가해 보세요 📋</div>`;
     return;
   }
-  container.innerHTML = blocks.map((block, bi) => `
+  const cats = state.categories || [];
+  container.innerHTML = blocks.map((block, bi) => {
+    const cat = getCat(block.cat);
+    const catBadge = cat
+      ? `<span class="block-cat-badge" style="background:${cat.color};">${cat.label}</span>`
+      : '';
+    const catSelect = cats.map(c => {
+      const sel = block.cat === c.id;
+      return `<span class="cat-tag ${sel ? 'active' : ''}"
+        style="${sel ? `background:${c.color};border-color:${c.color};` : ''};font-size:0.62rem;padding:0.15rem 0.5rem;"
+        onclick="updateBlockCat(${dayIdx},${bi},'${c.id}')">${c.label}</span>`;
+    }).join('') + `<span class="cat-tag" style="font-size:0.62rem;padding:0.15rem 0.5rem;" onclick="updateBlockCat(${dayIdx},${bi},null)">없음</span>`;
+    return `
     <div class="time-block">
       <div class="time-block-header">
         <span class="time-label">${block.start} ~ ${block.end}</span>
+        ${catBadge}
         <input class="time-subject-input" placeholder="과목 / 내용" value="${escHtml(block.subject||'')}" onchange="updateWeekBlock(${dayIdx},${bi},'subject',this.value)" />
         <button class="del-btn" style="opacity:1;color:var(--text3);" onclick="delWeekBlock(${dayIdx},${bi})">✕</button>
       </div>
       <div class="time-block-body">
+        ${cats.length > 0 ? `<div class="cat-tags-row" style="margin-bottom:0.5rem;">${catSelect}</div>` : ''}
         <textarea class="time-note" rows="2" placeholder="메모..." onchange="updateWeekBlock(${dayIdx},${bi},'note',this.value)">${escHtml(block.note||'')}</textarea>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -1401,13 +1539,18 @@ window.addTimeBlock = () => {
   if (start >= end) { showToast('종료 시간이 시작 시간보다 늦어야 해요'); return; }
 
   if (!state.weekly[currentWeekDay]) state.weekly[currentWeekDay] = [];
-  state.weekly[currentWeekDay].push({ start, end, subject, note: '' });
+  state.weekly[currentWeekDay].push({ start, end, subject, note: '', cat: selectedCat });
   state.weekly[currentWeekDay].sort((a,b) => a.start.localeCompare(b.start));
   document.getElementById('time-start').value = '';
   document.getElementById('time-end').value = '';
   document.getElementById('time-subject').value = '';
   renderWeekDay(currentWeekDay); scheduleSave();
   showToast(`${DAY_NAMES[currentWeekDay]}요일 ${start}~${end} 추가됐어요`);
+};
+
+window.updateBlockCat = (dayIdx, bi, catId) => {
+  state.weekly[dayIdx][bi].cat = catId;
+  renderWeekDay(dayIdx); scheduleSave();
 };
 
 window.updateWeekBlock = (dayIdx, bi, field, val) => {
@@ -1418,6 +1561,13 @@ window.delWeekBlock = (dayIdx, bi) => {
   state.weekly[dayIdx].splice(bi, 1);
   renderWeekDay(dayIdx); scheduleSave();
   showToast('시간 블록이 삭제됐어요');
+};
+
+window.resetWeeklyData = () => {
+  if (!confirm('시간표 전체를 초기화할까요? 모든 요일의 일정이 삭제돼요.')) return;
+  for (let i = 0; i < 7; i++) state.weekly[i] = [];
+  renderWeekDay(currentWeekDay); scheduleSave();
+  showToast('✓ 시간표가 초기화됐어요');
 };
 
 // ── TOAST ──
