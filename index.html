@@ -166,8 +166,10 @@
   .cl-fail-chip { color: var(--red); border-color: var(--red); background: rgba(192,57,43,0.06); }
   .cl-text { flex: 1; font-size: 0.85rem; color: var(--text); cursor: pointer; line-height: 1.4; }
   .checklist-item.checked-item .cl-text { color: var(--text3); text-decoration: line-through; }
-  .cl-del { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 0.72rem; padding: 0.2rem 0.4rem; border-radius: 4px; opacity: 0; transition: all 0.2s; }
-  .checklist-item:hover .cl-del { opacity: 1; }
+  .cl-drag { color: var(--text3); cursor: grab; font-size: 0.85rem; padding: 0 0.1rem; opacity: 0; transition: opacity 0.2s; user-select: none; flex-shrink: 0; }
+  .checklist-item:hover .cl-drag { opacity: 1; }
+  .checklist-item.dragging { opacity: 0.4; }
+  .checklist-item.drag-over { border-top: 2px solid var(--gold); }
   .cl-del:hover { color: var(--red); background: rgba(192,57,43,0.1); }
   .cl-add-row { display: flex; gap: 0.6rem; margin-top: 0.8rem; }
   .cl-stats { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
@@ -970,7 +972,8 @@ function renderChecklist() {
     const cbClass  = item.done ? 'checked' : item.failed ? 'failed' : '';
     const cbIcon   = item.done ? '✓' : item.failed ? '✕' : '';
     return `
-    <div class="checklist-item ${rowClass}">
+    <div class="checklist-item ${rowClass}" draggable="true" data-idx="${i}">
+      <span class="cl-drag" title="드래그해서 순서 변경">⠿</span>
       <div class="cl-checkbox ${cbClass}" onclick="toggleCheckItem(${i})">${cbIcon}</div>
       <span class="cl-text">${item.text}</span>
       <span class="cl-time-label">⏱</span>
@@ -980,8 +983,35 @@ function renderChecklist() {
       <button class="cl-del" onclick="delCheckItem(${i})">🗑</button>
     </div>`;
   }).join('');
+
+  // 드래그 앤 드롭
+  let dragSrc = null;
+  container.querySelectorAll('.checklist-item').forEach(el => {
+    el.addEventListener('dragstart', e => {
+      dragSrc = parseInt(el.dataset.idx);
+      el.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    el.addEventListener('dragend', () => {
+      container.querySelectorAll('.checklist-item').forEach(r => r.classList.remove('dragging', 'drag-over'));
+    });
+    el.addEventListener('dragover', e => {
+      e.preventDefault();
+      container.querySelectorAll('.checklist-item').forEach(r => r.classList.remove('drag-over'));
+      el.classList.add('drag-over');
+    });
+    el.addEventListener('drop', e => {
+      e.preventDefault();
+      const dropIdx = parseInt(el.dataset.idx);
+      if (dragSrc === null || dragSrc === dropIdx) return;
+      const moved = state.checklist.splice(dragSrc, 1)[0];
+      state.checklist.splice(dropIdx, 0, moved);
+      renderChecklist(); scheduleSave();
+    });
+  });
+
   // hover로 실패 버튼 표시
-  document.querySelectorAll('.cl-fail-btn').forEach(btn => {
+  container.querySelectorAll('.cl-fail-btn').forEach(btn => {
     btn.closest('.checklist-item').addEventListener('mouseenter', () => btn.style.opacity='1');
     btn.closest('.checklist-item').addEventListener('mouseleave', () => btn.style.opacity='0');
   });
@@ -1208,6 +1238,35 @@ function renderTodayTimetable() {
 }
 
 // ── 강의 해빗 트래커 ──
+// ── 공통 드래그 앤 드롭 헬퍼 ──
+function applyDragDrop(container, getArray, onReorder) {
+  let dragSrc = null;
+  container.querySelectorAll('[draggable="true"]').forEach(el => {
+    el.addEventListener('dragstart', e => {
+      dragSrc = parseInt(el.dataset.idx);
+      requestAnimationFrame(() => el.classList.add('dragging'));
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    el.addEventListener('dragend', () => {
+      container.querySelectorAll('[draggable]').forEach(r => r.classList.remove('dragging', 'drag-over'));
+    });
+    el.addEventListener('dragover', e => {
+      e.preventDefault();
+      container.querySelectorAll('[draggable]').forEach(r => r.classList.remove('drag-over'));
+      el.classList.add('drag-over');
+    });
+    el.addEventListener('drop', e => {
+      e.preventDefault();
+      const dropIdx = parseInt(el.dataset.idx);
+      if (dragSrc === null || dragSrc === dropIdx) return;
+      const arr = getArray();
+      const moved = arr.splice(dragSrc, 1)[0];
+      arr.splice(dropIdx, 0, moved);
+      onReorder();
+    });
+  });
+}
+
 function renderLectures() {
   const container = document.getElementById('lecture-courses');
   if (!container) return;
@@ -1221,6 +1280,8 @@ function renderLectures() {
 
     const div = document.createElement('div');
     div.className = 'lecture-course';
+    div.setAttribute('draggable', 'true');
+    div.dataset.idx = ci;
 
     const dotsHtml = Array.from({length: total}, (_, k) => {
       const isDone = (course.done || [])[k];
@@ -1229,6 +1290,7 @@ function renderLectures() {
 
     div.innerHTML = `
       <div class="lecture-course-header" onclick="toggleLectureCourse(this)">
+        <span class="cl-drag" style="opacity:0.5;margin-right:0.2rem;" title="드래그해서 순서 변경">⠿</span>
         <div style="flex:1;min-width:0;">
           <div class="lecture-course-name" style="margin-bottom:0.4rem;">
             ${course.name}
@@ -1252,6 +1314,8 @@ function renderLectures() {
       </div>`;
     container.appendChild(div);
   });
+
+  applyDragDrop(container, () => state.lectures, () => { renderLectures(); renderTrackerOverview(); scheduleSave(); });
 }
 
 window.addLectureCourse = () => {
@@ -1318,8 +1382,11 @@ function renderSection(type) {
     const pct2 = total ? Math.round(done2/total*100) : 0;
     const div = document.createElement('div');
     div.className = 'subject-group';
+    div.setAttribute('draggable', 'true');
+    div.dataset.idx = gi;
     div.innerHTML = `
       <div class="subject-title-row" onclick="toggleGroup(this)">
+        <span class="cl-drag" style="opacity:0.5;margin-right:0.2rem;" title="드래그해서 순서 변경">⠿</span>
         <div style="flex:1;min-width:0;">
           <div class="subject-name" style="margin-bottom:0.2rem;">
             ${group.name}
@@ -1355,9 +1422,11 @@ function renderSection(type) {
           <span style="font-size:0.68rem;color:var(--text2);width:52px;text-align:center;font-family: 'Pretendard', sans-serif;">2회독</span>
           <span style="width:24px;"></span>
         </div>
+        <div class="items-draggable" data-type="${type}" data-gi="${gi}">
         ${group.items.map((item, ii) => {
           const rowDone = item.done && item.done2;
-          return `<div class="item-row ${rowDone?'done':''}">
+          return `<div class="item-row ${rowDone?'done':''}" draggable="true" data-idx="${ii}">
+            <span class="cl-drag" style="opacity:0.4;font-size:0.75rem;" title="순서 변경">⠿</span>
             <span class="item-label" style="${rowDone?'color:var(--text3);text-decoration:line-through;':''}">${item.label}</span>
             <div style="display:flex;gap:6px;align-items:center;margin-left:auto;">
               <div class="check-box ${item.done?'checked':''}" style="width:22px;height:22px;" onclick="toggleItem('${type}',${gi},${ii},1)" title="1회독">${item.done?'✓':''}</div>
@@ -1366,6 +1435,7 @@ function renderSection(type) {
             <button class="del-btn" onclick="delItem('${type}',${gi},${ii})">✕</button>
           </div>`;
         }).join('')}
+        </div>
         <div class="item-row" style="background:transparent;border:none;">
           <div class="add-row" style="width:100%;">
             <input class="add-input" id="item-input-${type}-${gi}" placeholder="항목 추가 (Enter)" onkeydown="if(event.key==='Enter')addItem('${type}',${gi})" />
@@ -1374,6 +1444,15 @@ function renderSection(type) {
         </div>
       </div>`;
     container.appendChild(div);
+  });
+
+  // 과목 순서 드래그
+  applyDragDrop(container, () => state[type], () => { renderSection(type); renderTrackerOverview(); scheduleSave(); });
+
+  // 항목 순서 드래그
+  container.querySelectorAll('.items-draggable').forEach(wrap => {
+    const gi = parseInt(wrap.dataset.gi);
+    applyDragDrop(wrap, () => state[type][gi].items, () => { renderSection(type); renderTrackerOverview(); scheduleSave(); });
   });
 }
 
