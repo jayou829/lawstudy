@@ -548,36 +548,44 @@ onSnapshot(docRef, (snap) => {
 function autoClearDoneItems() {
   const RESET_HOUR = 4;
   const now = new Date();
-  const todayReset = new Date(now);
-  todayReset.setHours(RESET_HOUR, 0, 0, 0);
+
+  // "오늘의 기준일" 계산: 현재 시각이 새벽 4시 이전이면 전날이 기준일
+  const base = new Date(now);
+  if (now.getHours() < RESET_HOUR) base.setDate(base.getDate() - 1);
+  const baseDateStr = `${base.getFullYear()}-${String(base.getMonth()+1).padStart(2,'0')}-${String(base.getDate()).padStart(2,'0')}`;
 
   const lastKey = 'checklist_last_cleared';
-  const lastCleared = parseInt(localStorage.getItem(lastKey) || '0', 10);
+  const lastCleared = localStorage.getItem(lastKey) || '';
 
-  if (lastCleared < todayReset.getTime() && now >= todayReset) {
-    // 아카이브 날짜: 전날 (새벽 4시 기준이므로 자정~4시는 전날로)
-    const archiveDate = new Date(todayReset.getTime() - 1); // 4시 1ms 전 = 전날
-    const dateKey = `${archiveDate.getFullYear()}-${String(archiveDate.getMonth()+1).padStart(2,'0')}-${String(archiveDate.getDate()).padStart(2,'0')}`;
+  // 이미 오늘 기준일에 정리했으면 스킵
+  if (lastCleared === baseDateStr) return;
 
-    const doneItems = state.checklist.filter(item => item.done || item.failed);
-    if (doneItems.length > 0) {
-      if (!state.doneHistory) state.doneHistory = {};
-      // 기존 기록에 합치기 (중복 방지)
-      const existing = state.doneHistory[dateKey] || [];
-      const existingTexts = new Set(existing.map(i => i.text));
-      const newItems = doneItems.filter(i => !existingTexts.has(i.text));
-      state.doneHistory[dateKey] = [...existing, ...newItems];
-    }
+  // 새벽 4시가 지났을 때만 실행
+  const todayReset = new Date(now);
+  todayReset.setHours(RESET_HOUR, 0, 0, 0);
+  if (now < todayReset) return; // 아직 새벽 4시 안 됨
 
-    const before = state.checklist.length;
-    state.checklist = state.checklist.filter(item => !item.done && !item.failed);
-    const removed = before - state.checklist.length;
-    if (removed > 0) {
-      scheduleSave();
-      showToast(`✓ 완료/실패 ${removed}개가 기록으로 저장됐어요`);
-    }
-    localStorage.setItem(lastKey, now.getTime().toString());
+  // 아카이브 날짜 = 기준일 (새벽 4시 이전이면 전날)
+  const archiveDate = base;
+  const dateKey = baseDateStr;
+
+  const doneItems = state.checklist.filter(item => item.done || item.failed);
+  if (doneItems.length > 0) {
+    if (!state.doneHistory) state.doneHistory = {};
+    const existing = state.doneHistory[dateKey] || [];
+    const existingTexts = new Set(existing.map(i => i.text));
+    const newItems = doneItems.filter(i => !existingTexts.has(i.text));
+    state.doneHistory[dateKey] = [...existing, ...newItems];
   }
+
+  const before = state.checklist.length;
+  state.checklist = state.checklist.filter(item => !item.done && !item.failed);
+  const removed = before - state.checklist.length;
+  if (removed > 0) {
+    scheduleSave();
+    showToast(`✓ 완료/실패 ${removed}개가 기록으로 저장됐어요`);
+  }
+  localStorage.setItem(lastKey, baseDateStr);
 }
 
 function scheduleSave() {
