@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>STUDY</title>
+<title>STUDY TRACKER</title>
 <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
 <style>
   :root {
@@ -262,7 +262,7 @@
 <nav>
   <button class="nav-btn active" onclick="showSection('checklist',this)">✅</button>
   <button class="nav-btn" onclick="showSection('tracker',this)">📊</button>
-  <button class="nav-btn" onclick="showSection('daily',this)">🗓️</button>
+  <button class="nav-btn" onclick="showSection('daily',this)">⏰</button>
   <button class="nav-btn" onclick="showSection('calendar',this)">📅</button>
 </nav>
 
@@ -276,7 +276,7 @@
       </div>
       <div style="display:flex;align-items:center;gap:0.8rem;">
         <div class="cl-date-badge" id="cl-date-badge"></div>
-        <button class="add-btn" id="cl-view-toggle" onclick="toggleChecklistView()" style="font-size:0.72rem;padding:0.35rem 0.8rem;">🗓️</button>
+        <button class="add-btn" id="cl-view-toggle" onclick="toggleChecklistView()" style="font-size:0.72rem;padding:0.35rem 0.8rem;">⇄</button>
       </div>
     </div>
     <!-- 체크리스트 뷰 -->
@@ -741,7 +741,7 @@ window.showSubjectDetail = (subj) => {
           <span style="font-size:0.65rem;color:var(--text3);">▼</span>
         </div>
       </div>
-      <div class="items-list">
+      <div class="items-list collapsed">
         <div style="padding:0.7rem 1rem;display:flex;flex-wrap:wrap;gap:6px;">
           ${Array.from({length:total},(_,k)=>{
             const done = (course.done||[])[k];
@@ -787,7 +787,7 @@ window.showSubjectDetail = (subj) => {
             <span style="font-size:0.65rem;color:var(--text3);">▼</span>
           </div>
         </div>
-        <div class="items-list">
+        <div class="items-list collapsed">
           <div class="item-row" style="background:var(--bg3);padding:0.4rem 1rem;border-bottom:1px solid var(--border);">
             <span style="flex:1;font-size:0.72rem;color:var(--text3);">항목</span>
             <span style="font-size:0.68rem;color:var(--gold);width:52px;text-align:center;font-family:'Pretendard',sans-serif;">1회독</span>
@@ -933,11 +933,11 @@ function setClView(mode) {
 window.toggleChecklistView = () => {
   if (clViewMode !== 'timetable') {
     setClView('timetable');
-    document.getElementById('cl-view-toggle').textContent = '✅';
+    document.getElementById('cl-view-toggle').textContent = '⇄';
     renderTodayTimetable();
   } else {
     setClView('checklist');
-    document.getElementById('cl-view-toggle').textContent = '🗓️';
+    document.getElementById('cl-view-toggle').textContent = '⇄';
   }
 };
 
