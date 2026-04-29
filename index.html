@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>STUDY</title>
+<title>STUDY TRACKER</title>
 <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
 <style>
   :root {
@@ -225,7 +225,9 @@
   .cl-cal-day.has-record::after { content: ''; display: block; width: 5px; height: 5px; background: var(--gold); border-radius: 50%; margin: 2px auto 0; }
   .cl-cal-day.selected { background: var(--gold); color: #fff; font-weight: 600; }
   .cl-cal-day.selected::after { background: #fff; }
-  .cl-cal-day.today-cal { font-weight: 700; color: var(--gold2); }
+  .cl-cal-day.today-cal { font-weight: 700; }
+  .cl-cal-day.today-cal::before { content: ''; position: absolute; inset: 1px; border: 1.5px solid var(--gold); border-radius: 50%; pointer-events: none; }
+  .cl-cal-day.today-cal.selected::before { border-color: rgba(255,255,255,0.7); }
   .cl-cal-day.other-month { color: var(--text3); opacity: 0.4; }
   .cl-cal-day.empty { cursor: default; }
   .cl-record-list { padding: 0.8rem 1.2rem 1rem; }
@@ -432,7 +434,7 @@
   <!-- ── 완료 기록 캘린더 ── -->
   <div class="section" id="section-calendar">
     <div class="section-header">
-      <div class="section-title">📅 완료 기록</div>
+      <div class="section-title">📅 기록</div>
     </div>
     <div class="cl-calendar-wrap">
       <div class="cl-cal-header">
