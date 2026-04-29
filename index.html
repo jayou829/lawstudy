@@ -262,7 +262,7 @@
 <nav>
   <button class="nav-btn active" onclick="showSection('checklist',this)">✅</button>
   <button class="nav-btn" onclick="showSection('tracker',this)">📊</button>
-  <button class="nav-btn" onclick="showSection('daily',this)">⏰</button>
+  <button class="nav-btn" onclick="showSection('daily',this)">🕐</button>
   <button class="nav-btn" onclick="showSection('calendar',this)">📅</button>
 </nav>
 
@@ -407,7 +407,7 @@
 
   <!-- ── 요일별 시간표 ── -->
   <div class="section" id="section-daily">
-    <div class="section-header"><div><div class="section-title">🗓️ 시간표</div></div></div>
+    <div class="section-header"><div><div class="section-title">🕐 시간표</div></div></div>
     
     <div class="week-tabs" id="weekTabs">
       <button class="week-tab" onclick="selectWeekDay(0,this)">월</button>
@@ -713,6 +713,12 @@ function renderSubjectOverview() {
 
 // 과목별 상세 뷰
 window.showSubjectDetail = (subj) => {
+  // 다른 과목으로 새로 진입할 때만 열림 상태 초기화
+  const prevSubj = document.getElementById('subject-detail-title')?.dataset.subjectKey;
+  const detailEl = document.getElementById('tracker-view-subject-detail');
+  const isNewSubject = !prevSubj || prevSubj !== subj || !detailEl || detailEl.style.display === 'none';
+  if (isNewSubject) openSubjectDetailGroups.clear();
+
   TRACKER_VIEWS.forEach(v => {
     const el = document.getElementById('tracker-view-' + v);
     if (el) el.style.display = v === 'subject-detail' ? 'block' : 'none';
@@ -733,15 +739,17 @@ window.showSubjectDetail = (subj) => {
     const total = course.total || 0;
     const doneCnt = (course.done||[]).filter(Boolean).length;
     const pct = total ? Math.round(doneCnt/total*100) : 0;
+    const groupKey = `lecture:${ci}`;
+    const isOpen = openSubjectDetailGroups.has(groupKey);
     blocks.push(`<div class="subject-detail-type">
-      <div class="subject-detail-type-header" onclick="this.nextElementSibling.classList.toggle('collapsed')">
+      <div class="subject-detail-type-header" onclick="toggleSubjectDetailGroup(this,'${groupKey}')">
         <span>강의 <span style="font-size:0.72rem;color:var(--text3);font-weight:400;">${course.name}</span></span>
         <div style="display:flex;align-items:center;gap:0.5rem;">
           <span class="subject-detail-badge">${doneCnt}/${total}강 (${pct}%)</span>
           <span style="font-size:0.65rem;color:var(--text3);">▼</span>
         </div>
       </div>
-      <div class="items-list collapsed">
+      <div class="items-list ${isOpen ? '' : 'collapsed'}">
         <div style="padding:0.7rem 1rem;display:flex;flex-wrap:wrap;gap:6px;">
           ${Array.from({length:total},(_,k)=>{
             const done = (course.done||[])[k];
@@ -763,6 +771,8 @@ window.showSubjectDetail = (subj) => {
       const done2 = group.items.filter(i=>i.done2).length;
       const pct1 = total ? Math.round(done1/total*100) : 0;
       const pct2 = total ? Math.round(done2/total*100) : 0;
+      const groupKey = `${t}:${gi}`;
+      const isOpen = openSubjectDetailGroups.has(groupKey);
 
       const itemsHtml = group.items.map((item, ii) => {
         const rowDone = item.done && item.done2;
@@ -780,14 +790,14 @@ window.showSubjectDetail = (subj) => {
         : typeNames[t];
 
       blocks.push(`<div class="subject-detail-type">
-        <div class="subject-detail-type-header" onclick="this.nextElementSibling.classList.toggle('collapsed')">
+        <div class="subject-detail-type-header" onclick="toggleSubjectDetailGroup(this,'${groupKey}')">
           <span>${headerLabel}</span>
           <div style="display:flex;align-items:center;gap:0.5rem;">
             <span class="subject-detail-badge">1회 ${done1}/${total} (${pct1}%) · 2회 ${done2}/${total} (${pct2}%)</span>
             <span style="font-size:0.65rem;color:var(--text3);">▼</span>
           </div>
         </div>
-        <div class="items-list collapsed">
+        <div class="items-list ${isOpen ? '' : 'collapsed'}">
           <div class="item-row" style="background:var(--bg3);padding:0.4rem 1rem;border-bottom:1px solid var(--border);">
             <span style="flex:1;font-size:0.72rem;color:var(--text3);">항목</span>
             <span style="font-size:0.68rem;color:var(--gold);width:52px;text-align:center;font-family:'Pretendard',sans-serif;">1회독</span>
@@ -1130,6 +1140,9 @@ window.delLectureCourse = (ci) => {
 // ── 일반 진도표 열림 상태 메모리 ──
 const openGroups = {}; // { type: Set<gi> }
 
+// ── 과목별 상세 뷰 열림 상태 메모리 ──
+const openSubjectDetailGroups = new Set(); // Set<"type:gi"> (현재 열린 과목 상세 기준)
+
 // ── 일반 진도표 (1회독/2회독 지원) ──
 function renderSection(type) {
   const groups = state[type] || [];
@@ -1218,6 +1231,14 @@ window.toggleGroup = (header) => {
   const groupName = (state[type]||[])[gi]?.name;
   if (!openGroups[type]) openGroups[type] = new Set();
   if (!open) openGroups[type].add(groupName); else openGroups[type].delete(groupName);
+};
+
+window.toggleSubjectDetailGroup = (header, groupKey) => {
+  const list = header.nextElementSibling;
+  const isCollapsed = list.classList.contains('collapsed');
+  list.classList.toggle('collapsed', !isCollapsed);
+  if (isCollapsed) openSubjectDetailGroups.add(groupKey);
+  else openSubjectDetailGroups.delete(groupKey);
 };
 
 window.toggleItem = (type, gi, ii, round) => {
