@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>STUDY TRACKER</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;600;700&family=Noto+Sans+KR:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
 <style>
   :root {
     --bg: #faf8f4; --bg2: #ffffff; --bg3: #f3f0ea; --card: #ffffff;
@@ -15,22 +15,22 @@
     --accent: #8b6914;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: var(--bg); color: var(--text); font-family: 'Noto Sans KR', sans-serif; min-height: 100vh; overflow-x: hidden; }
+  body { background: var(--bg); color: var(--text); font-family: 'Pretendard', sans-serif; min-height: 100vh; overflow-x: hidden; }
 
   /* Loading */
   .loading-overlay { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 999; gap: 1rem; transition: opacity 0.5s; }
   .loading-overlay.hidden { opacity: 0; pointer-events: none; }
   .loading-spinner { width: 36px; height: 36px; border: 2px solid var(--border); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
-  .loading-text { font-size: 0.8rem; color: var(--text3); font-family: 'DM Mono', monospace; }
+  .loading-text { font-size: 0.8rem; color: var(--text3); font-family: 'Pretendard', sans-serif; }
 
   /* Header */
   header { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; height: 64px; position: sticky; top: 0; z-index: 100; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
-  .logo { font-family: 'Noto Serif KR', serif; font-size: 1.15rem; font-weight: 700; color: var(--gold); display: flex; align-items: center; gap: 0.6rem; }
+  .logo { font-family: 'Pretendard', sans-serif; font-size: 1.15rem; font-weight: 700; color: var(--gold); display: flex; align-items: center; gap: 0.6rem; }
   .logo-icon { width: 28px; height: 28px; border: 1.5px solid var(--gold); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; }
   .header-right { display: flex; align-items: center; gap: 1rem; }
-  .today-info { font-size: 0.75rem; color: var(--text2); font-family: 'DM Mono', monospace; }
-  .sync-status { font-size: 0.7rem; font-family: 'DM Mono', monospace; padding: 0.25rem 0.6rem; border-radius: 100px; border: 1px solid var(--border); color: var(--text3); transition: all 0.3s; }
+  .today-info { font-size: 0.75rem; color: var(--text2); font-family: 'Pretendard', sans-serif; }
+  .sync-status { font-size: 0.7rem; font-family: 'Pretendard', sans-serif; padding: 0.25rem 0.6rem; border-radius: 100px; border: 1px solid var(--border); color: var(--text3); transition: all 0.3s; }
   .sync-status.synced { border-color: var(--green2); color: var(--green2); }
   .sync-status.syncing { border-color: var(--gold); color: var(--gold); }
   .sync-status.error { border-color: var(--red); color: var(--red); }
@@ -38,7 +38,7 @@
   /* Nav */
   nav { background: var(--bg2); border-bottom: 1px solid var(--border); display: flex; overflow-x: auto; scrollbar-width: none; padding: 0 1.5rem; }
   nav::-webkit-scrollbar { display: none; }
-  .nav-btn { padding: 0.85rem 1.2rem; font-size: 0.8rem; font-family: 'Noto Sans KR', sans-serif; font-weight: 500; color: var(--text2); background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; white-space: nowrap; transition: all 0.2s; }
+  .nav-btn { padding: 0.85rem 1.2rem; font-size: 0.8rem; font-family: 'Pretendard', sans-serif; font-weight: 500; color: var(--text2); background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; white-space: nowrap; transition: all 0.2s; }
   .nav-btn:hover { color: var(--gold2); }
   .nav-btn.active { color: var(--gold); border-bottom-color: var(--gold); }
 
@@ -47,11 +47,11 @@
   .section { display: none; }
   .section.active { display: block; }
   .section-header { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 1.8rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border); }
-  .section-title { font-family: 'Noto Serif KR', serif; font-size: 1.4rem; font-weight: 600; color: var(--gold); }
+  .section-title { font-family: 'Pretendard', sans-serif; font-size: 1.4rem; font-weight: 600; color: var(--gold); }
 
   /* Progress */
   .progress-wrap { margin-bottom: 2rem; background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 1.2rem 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
-  .progress-label { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text2); margin-bottom: 0.6rem; font-family: 'DM Mono', monospace; }
+  .progress-label { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text2); margin-bottom: 0.6rem; font-family: 'Pretendard', sans-serif; }
   .progress-pct { color: var(--gold); font-weight: 500; font-size: 0.9rem; }
   .progress-bar { height: 6px; background: var(--border); border-radius: 100px; overflow: hidden; }
   .progress-fill { height: 100%; background: linear-gradient(90deg, var(--gold), var(--gold2)); border-radius: 100px; transition: width 0.5s cubic-bezier(0.4,0,0.2,1); }
@@ -60,7 +60,7 @@
   .subject-group { margin-bottom: 1.5rem; }
   .subject-title-row { display: flex; align-items: center; justify-content: space-between; padding: 0.7rem 1rem; background: var(--bg3); border: 1px solid var(--border); border-radius: 6px 6px 0 0; cursor: pointer; user-select: none; }
   .subject-name { font-size: 0.85rem; font-weight: 500; color: var(--gold2); display: flex; align-items: center; gap: 0.6rem; }
-  .subject-badge { font-family: 'DM Mono', monospace; font-size: 0.7rem; color: var(--text3); background: var(--bg2); padding: 0.15rem 0.5rem; border-radius: 100px; border: 1px solid var(--border); }
+  .subject-badge { font-family: 'Pretendard', sans-serif; font-size: 0.7rem; color: var(--text3); background: var(--bg2); padding: 0.15rem 0.5rem; border-radius: 100px; border: 1px solid var(--border); }
   .subject-chevron { font-size: 0.7rem; color: var(--text3); transition: transform 0.2s; }
   .subject-chevron.open { transform: rotate(180deg); }
   .items-list { border: 1px solid var(--border); border-top: none; border-radius: 0 0 6px 6px; overflow: hidden; background: var(--card); }
@@ -75,30 +75,30 @@
   .check-box { width: 18px; height: 18px; border: 1.5px solid var(--border); border-radius: 4px; flex-shrink: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; transition: all 0.2s; background: var(--bg); }
   .check-box.checked { background: var(--green2); border-color: var(--green2); color: #fff; }
   .item-label { font-size: 0.82rem; color: var(--text); flex: 1; line-height: 1.4; cursor: pointer; }
-  .item-num { font-family: 'DM Mono', monospace; font-size: 0.68rem; color: var(--text3); min-width: 2.2rem; text-align: right; }
+  .item-num { font-family: 'Pretendard', sans-serif; font-size: 0.68rem; color: var(--text3); min-width: 2.2rem; text-align: right; }
   .del-btn { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 0.7rem; padding: 0.2rem 0.4rem; border-radius: 4px; transition: all 0.2s; opacity: 0; }
   .item-row:hover .del-btn { opacity: 1; }
   .del-btn:hover { color: var(--red); background: rgba(192,57,43,0.1); }
 
   /* Inputs */
   .add-row { display: flex; gap: 0.6rem; }
-  .add-input { flex: 1; background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; padding: 0.55rem 0.9rem; font-size: 0.8rem; color: var(--text); font-family: 'Noto Sans KR', sans-serif; outline: none; transition: border-color 0.2s; }
+  .add-input { flex: 1; background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; padding: 0.55rem 0.9rem; font-size: 0.8rem; color: var(--text); font-family: 'Pretendard', sans-serif; outline: none; transition: border-color 0.2s; }
   .add-input::placeholder { color: var(--text3); }
   .add-input:focus { border-color: var(--gold); }
-  .add-btn { background: var(--gold-dim); border: 1px solid var(--gold); color: var(--gold); border-radius: 6px; padding: 0.55rem 1rem; font-size: 0.78rem; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; font-weight: 500; transition: all 0.2s; white-space: nowrap; }
+  .add-btn { background: var(--gold-dim); border: 1px solid var(--gold); color: var(--gold); border-radius: 6px; padding: 0.55rem 1rem; font-size: 0.78rem; cursor: pointer; font-family: 'Pretendard', sans-serif; font-weight: 500; transition: all 0.2s; white-space: nowrap; }
   .add-btn:hover { background: var(--gold); color: #fff; }
   .add-subject-row { display: flex; gap: 0.6rem; margin-bottom: 1rem; }
 
   /* ── 강의 해빗 트래커 ── */
   .lecture-add-row { display: flex; gap: 0.6rem; margin-bottom: 1rem; flex-wrap: wrap; }
   .lecture-add-row .add-input { min-width: 140px; }
-  .lec-count-input { width: 90px; background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; padding: 0.55rem 0.7rem; font-size: 0.8rem; color: var(--text); font-family: 'DM Mono', monospace; outline: none; transition: border-color 0.2s; }
+  .lec-count-input { width: 90px; background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; padding: 0.55rem 0.7rem; font-size: 0.8rem; color: var(--text); font-family: 'Pretendard', sans-serif; outline: none; transition: border-color 0.2s; }
   .lec-count-input:focus { border-color: var(--gold); }
 
   .lecture-course { background: var(--card); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 1.2rem; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
   .lecture-course-header { display: flex; align-items: center; justify-content: space-between; padding: 0.85rem 1.1rem; background: var(--bg3); border-bottom: 1px solid var(--border); cursor: pointer; user-select: none; }
   .lecture-course-name { font-size: 0.88rem; font-weight: 600; color: var(--gold); display: flex; align-items: center; gap: 0.6rem; }
-  .lecture-course-badge { font-family: 'DM Mono', monospace; font-size: 0.68rem; color: var(--text3); background: var(--bg2); padding: 0.15rem 0.55rem; border-radius: 100px; border: 1px solid var(--border); }
+  .lecture-course-badge { font-family: 'Pretendard', sans-serif; font-size: 0.68rem; color: var(--text3); background: var(--bg2); padding: 0.15rem 0.55rem; border-radius: 100px; border: 1px solid var(--border); }
   .lecture-course-right { display: flex; align-items: center; gap: 0.6rem; }
   .lecture-course-chevron { font-size: 0.7rem; color: var(--text3); transition: transform 0.2s; }
   .lecture-course-chevron.open { transform: rotate(180deg); }
@@ -107,39 +107,39 @@
 
   .lecture-dots-wrap { padding: 1rem 1.1rem 1.1rem; }
   .lecture-dots-grid { display: flex; flex-wrap: wrap; gap: 7px; }
-  .lecture-dot { width: 36px; height: 36px; border-radius: 50%; border: 1.5px solid var(--border); background: var(--bg3); display: flex; align-items: center; justify-content: center; font-family: 'DM Mono', monospace; font-size: 0.62rem; font-weight: 500; color: var(--text3); cursor: pointer; transition: all 0.18s; user-select: none; flex-shrink: 0; }
+  .lecture-dot { width: 36px; height: 36px; border-radius: 50%; border: 1.5px solid var(--border); background: var(--bg3); display: flex; align-items: center; justify-content: center; font-family: 'Pretendard', sans-serif; font-size: 0.62rem; font-weight: 500; color: var(--text3); cursor: pointer; transition: all 0.18s; user-select: none; flex-shrink: 0; }
   .lecture-dot:hover { border-color: var(--gold); color: var(--gold); background: var(--gold-dim); }
   .lecture-dot.done { background: var(--gold); border-color: var(--gold); color: #fff; box-shadow: 0 1px 6px rgba(139,105,20,0.3); }
   .lecture-dots-collapsed { display: none; }
 
   /* ── 요일별 시간표 ── */
   .week-tabs { display: flex; gap: 0.4rem; margin-bottom: 1.2rem; flex-wrap: wrap; }
-  .week-tab { padding: 0.45rem 0.9rem; font-size: 0.78rem; font-family: 'Noto Sans KR', sans-serif; font-weight: 500; border-radius: 20px; border: 1.5px solid var(--border); background: var(--bg3); color: var(--text2); cursor: pointer; transition: all 0.2s; }
+  .week-tab { padding: 0.45rem 0.9rem; font-size: 0.78rem; font-family: 'Pretendard', sans-serif; font-weight: 500; border-radius: 20px; border: 1.5px solid var(--border); background: var(--bg3); color: var(--text2); cursor: pointer; transition: all 0.2s; }
   .week-tab:hover { border-color: var(--gold); color: var(--gold); }
   .week-tab.active { background: var(--gold); border-color: var(--gold); color: #fff; }
   .week-tab.today { border-color: var(--gold2); }
 
   .time-block { background: var(--card); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 0.85rem; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
   .time-block-header { display: flex; align-items: center; padding: 0.7rem 1.1rem; background: var(--bg3); border-bottom: 1px solid var(--border); gap: 0.8rem; flex-wrap: wrap; }
-  .time-label { font-family: 'DM Mono', monospace; font-size: 0.8rem; color: var(--gold); min-width: 110px; font-weight: 500; }
-  .time-subject-input { flex: 1; min-width: 120px; background: transparent; border: none; border-bottom: 1px solid var(--border); color: var(--text); font-size: 0.82rem; font-family: 'Noto Sans KR', sans-serif; padding: 0.2rem 0; outline: none; transition: border-color 0.2s; }
+  .time-label { font-family: 'Pretendard', sans-serif; font-size: 0.8rem; color: var(--gold); min-width: 110px; font-weight: 500; }
+  .time-subject-input { flex: 1; min-width: 120px; background: transparent; border: none; border-bottom: 1px solid var(--border); color: var(--text); font-size: 0.82rem; font-family: 'Pretendard', sans-serif; padding: 0.2rem 0; outline: none; transition: border-color 0.2s; }
   .time-subject-input::placeholder { color: var(--text3); }
   .time-subject-input:focus { border-bottom-color: var(--gold); }
   .time-block-body { padding: 0.75rem 1.1rem; }
-  .time-note { width: 100%; background: transparent; border: none; color: var(--text2); font-size: 0.78rem; font-family: 'Noto Sans KR', sans-serif; resize: none; outline: none; line-height: 1.6; min-height: 36px; }
+  .time-note { width: 100%; background: transparent; border: none; color: var(--text2); font-size: 0.78rem; font-family: 'Pretendard', sans-serif; resize: none; outline: none; line-height: 1.6; min-height: 36px; }
   .time-note::placeholder { color: var(--text3); }
-  .time-done-btn { background: none; border: 1px solid var(--border); color: var(--text3); border-radius: 100px; padding: 0.28rem 0.75rem; font-size: 0.7rem; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; transition: all 0.2s; white-space: nowrap; }
+  .time-done-btn { background: none; border: 1px solid var(--border); color: var(--text3); border-radius: 100px; padding: 0.28rem 0.75rem; font-size: 0.7rem; cursor: pointer; font-family: 'Pretendard', sans-serif; transition: all 0.2s; white-space: nowrap; }
   .time-done-btn.done { border-color: var(--green2); color: var(--green2); background: var(--green-dim); }
   .add-time-row { display: flex; gap: 0.6rem; margin-bottom: 1rem; align-items: center; flex-wrap: wrap; background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 0.8rem 1rem; }
   .add-time-row span { color: var(--text3); font-size: 0.8rem; }
-  .time-input { background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; padding: 0.5rem 0.7rem; font-size: 0.82rem; color: var(--text); font-family: 'DM Mono', monospace; outline: none; transition: border-color 0.2s; text-align: center; }
+  .time-input { background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; padding: 0.5rem 0.7rem; font-size: 0.82rem; color: var(--text); font-family: 'Pretendard', sans-serif; outline: none; transition: border-color 0.2s; text-align: center; }
   .time-input:focus { border-color: var(--gold); }
   .timetable-empty { text-align: center; padding: 2.5rem 1rem; color: var(--text3); font-size: 0.82rem; background: var(--card); border: 1px dashed var(--border); border-radius: 8px; }
   .day-section { margin-bottom: 1.6rem; }
   .day-section-header { display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem 0; margin-bottom: 0.6rem; border-bottom: 2px solid var(--border); }
-  .day-section-name { font-family: 'Noto Serif KR', serif; font-size: 0.95rem; font-weight: 600; color: var(--gold); }
+  .day-section-name { font-family: 'Pretendard', sans-serif; font-size: 0.95rem; font-weight: 600; color: var(--gold); }
   .day-section-name.today-label { color: var(--green2); }
-  .day-section-count { font-family: 'DM Mono', monospace; font-size: 0.68rem; color: var(--text3); background: var(--bg3); border: 1px solid var(--border); border-radius: 100px; padding: 0.1rem 0.5rem; }
+  .day-section-count { font-family: 'Pretendard', sans-serif; font-size: 0.68rem; color: var(--text3); background: var(--bg3); border: 1px solid var(--border); border-radius: 100px; padding: 0.1rem 0.5rem; }
   .day-section-empty { color: var(--text3); font-size: 0.78rem; padding: 0.6rem 0.2rem; font-style: italic; }
 
   /* ── 오늘 할 일 체크리스트 ── */
@@ -161,14 +161,14 @@
   .cl-del:hover { color: var(--red); background: rgba(192,57,43,0.1); }
   .cl-add-row { display: flex; gap: 0.6rem; margin-top: 0.8rem; }
   .cl-stats { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
-  .cl-stat-chip { font-family: 'DM Mono', monospace; font-size: 0.72rem; color: var(--text2); background: var(--bg3); border: 1px solid var(--border); border-radius: 100px; padding: 0.25rem 0.75rem; }
+  .cl-stat-chip { font-family: 'Pretendard', sans-serif; font-size: 0.72rem; color: var(--text2); background: var(--bg3); border: 1px solid var(--border); border-radius: 100px; padding: 0.25rem 0.75rem; }
   .cl-stat-chip.done-chip { color: var(--green2); border-color: var(--green2); background: var(--green-dim); }
-  .cl-date-badge { font-size: 0.75rem; color: var(--text3); font-family: 'DM Mono', monospace; }
+  .cl-date-badge { font-size: 0.75rem; color: var(--text3); font-family: 'Pretendard', sans-serif; }
 
   /* Overview */
   .overview-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
   .ov-card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 1.2rem 1rem; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
-  .ov-pct { font-family: 'DM Mono', monospace; font-size: 1.6rem; font-weight: 500; color: var(--gold); line-height: 1; margin-bottom: 0.4rem; }
+  .ov-pct { font-family: 'Pretendard', sans-serif; font-size: 1.6rem; font-weight: 500; color: var(--gold); line-height: 1; margin-bottom: 0.4rem; }
   .ov-label { font-size: 0.7rem; color: var(--text3); }
   .ov-bar { margin-top: 0.6rem; height: 3px; background: var(--border); border-radius: 100px; overflow: hidden; }
   .ov-fill { height: 100%; background: linear-gradient(90deg, var(--gold), var(--gold2)); border-radius: 100px; transition: width 0.6s; }
@@ -182,15 +182,15 @@
   .tracker-card-bar { height: 4px; background: var(--border); border-radius: 100px; overflow: hidden; margin-bottom: 0.5rem; }
   .tracker-card-fill { height: 100%; background: linear-gradient(90deg, var(--gold), var(--gold2)); border-radius: 100px; transition: width 0.5s; }
   .tracker-card-fill.fill2 { background: linear-gradient(90deg, var(--text2), var(--text3)); }
-  .tracker-card-stats { font-family: 'DM Mono', monospace; font-size: 0.68rem; color: var(--text3); display: flex; justify-content: space-between; }
-  .tracker-card-pct { font-family: 'DM Mono', monospace; font-size: 1.3rem; font-weight: 500; color: var(--gold); margin-bottom: 0.4rem; }
+  .tracker-card-stats { font-family: 'Pretendard', sans-serif; font-size: 0.68rem; color: var(--text3); display: flex; justify-content: space-between; }
+  .tracker-card-pct { font-family: 'Pretendard', sans-serif; font-size: 1.3rem; font-weight: 500; color: var(--gold); margin-bottom: 0.4rem; }
 
   /* Back button */
-  .tracker-back-btn { background: none; border: 1px solid var(--border); color: var(--text2); border-radius: 6px; padding: 0.35rem 0.8rem; font-size: 0.75rem; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; transition: all 0.2s; }
+  .tracker-back-btn { background: none; border: 1px solid var(--border); color: var(--text2); border-radius: 6px; padding: 0.35rem 0.8rem; font-size: 0.75rem; cursor: pointer; font-family: 'Pretendard', sans-serif; transition: all 0.2s; }
   .tracker-back-btn:hover { border-color: var(--gold); color: var(--gold); }
 
   /* Toast */
-  .toast { position: fixed; bottom: 2rem; right: 2rem; background: var(--bg2); border: 1px solid var(--gold); color: var(--gold); padding: 0.7rem 1.2rem; border-radius: 6px; font-size: 0.78rem; font-family: 'Noto Sans KR', sans-serif; opacity: 0; transform: translateY(10px); transition: all 0.3s; z-index: 1000; pointer-events: none; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+  .toast { position: fixed; bottom: 2rem; right: 2rem; background: var(--bg2); border: 1px solid var(--gold); color: var(--gold); padding: 0.7rem 1.2rem; border-radius: 6px; font-size: 0.78rem; font-family: 'Pretendard', sans-serif; opacity: 0; transform: translateY(10px); transition: all 0.3s; z-index: 1000; pointer-events: none; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
   .toast.show { opacity: 1; transform: translateY(0); }
 
   ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: var(--bg); } ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 100px; }
@@ -618,13 +618,13 @@ function renderTodayTimetable() {
     return;
   }
 
-  container.innerHTML = `<div style="font-size:0.75rem;color:var(--text2);margin-bottom:0.8rem;font-family:'DM Mono',monospace;">${dayNames[todayIdx]}요일 시간표 · 현재 ${currentTime}</div>` +
+  container.innerHTML = `<div style="font-size:0.75rem;color:var(--text2);margin-bottom:0.8rem;font-family: 'Pretendard', sans-serif;">${dayNames[todayIdx]}요일 시간표 · 현재 ${currentTime}</div>` +
     blocks.map(block => {
       const isCurrent = block.start <= currentTime && currentTime < block.end;
       return `<div class="time-block" style="${isCurrent ? 'border-color:var(--gold);box-shadow:0 0 0 2px rgba(139,105,20,0.15);' : ''}">
         <div class="time-block-header" style="${isCurrent ? 'background:var(--gold-dim);' : ''}">
           <span class="time-label">${block.start} ~ ${block.end}</span>
-          ${isCurrent ? '<span style="font-size:0.68rem;color:var(--gold);font-family:\'DM Mono\',monospace;font-weight:600;">▶ 지금</span>' : ''}
+          ${isCurrent ? '<span style="font-size:0.68rem;color:var(--gold);font-family:\'Pretendard\',sans-serif;font-weight:600;">▶ 지금</span>' : ''}
           <span style="flex:1;font-size:0.82rem;color:var(--text);padding:0 0.4rem;">${block.subject || ''}</span>
         </div>
         ${block.note ? `<div class="time-block-body"><div class="time-note">${block.note}</div></div>` : ''}
@@ -660,7 +660,7 @@ function renderLectures() {
             <span class="lecture-course-badge">${doneCnt}/${total}</span>
           </div>
           <div style="display:flex;align-items:center;gap:0.5rem;">
-            <span style="font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--gold);width:28px;">${pct}%</span>
+            <span style="font-family: 'Pretendard', sans-serif;font-size:0.62rem;color:var(--gold);width:28px;">${pct}%</span>
             <div style="flex:1;height:4px;background:var(--border);border-radius:100px;overflow:hidden;">
               <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--gold),var(--gold2));border-radius:100px;transition:width 0.5s;"></div>
             </div>
@@ -668,10 +668,10 @@ function renderLectures() {
         </div>
         <div class="lecture-course-right">
           <button class="lecture-del-btn" onclick="event.stopPropagation();delLectureCourse(${ci})">삭제</button>
-          <span class="lecture-course-chevron">▼</span>
+          <span class="lecture-course-chevron ${openCourses.has(ci) ? 'open' : ''}">▼</span>
         </div>
       </div>
-      <div class="lecture-dots-wrap lecture-dots-collapsed">
+      <div class="lecture-dots-wrap ${openCourses.has(ci) ? '' : 'lecture-dots-collapsed'}">
         <div class="lecture-dots-grid">${dotsHtml}</div>
       </div>`;
     container.appendChild(div);
@@ -690,6 +690,8 @@ window.addLectureCourse = () => {
   showToast(`"${name}" (${total}강) 추가됐어요`);
 };
 
+const openCourses = new Set(); // 열린 강의 인덱스 메모리 보관
+
 window.toggleLectureDot = (ci, k) => {
   if (!state.lectures[ci].done) state.lectures[ci].done = [];
   state.lectures[ci].done[k] = !state.lectures[ci].done[k];
@@ -703,6 +705,11 @@ window.toggleLectureCourse = (header) => {
   const isOpen = chevron.classList.contains('open');
   chevron.classList.toggle('open', !isOpen);
   body.classList.toggle('lecture-dots-collapsed', isOpen);
+  // ci는 header 부모의 인덱스로 추적
+  const courseEl = header.closest('.lecture-course');
+  const container = document.getElementById('lecture-courses');
+  const ci = Array.from(container.children).indexOf(courseEl);
+  if (!isOpen) openCourses.add(ci); else openCourses.delete(ci);
 };
 
 window.delLectureCourse = (ci) => {
@@ -735,18 +742,18 @@ function renderSection(type) {
           </div>
           <div style="display:flex;flex-direction:column;gap:3px;">
             <div style="display:flex;align-items:center;gap:0.5rem;">
-              <span style="font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--gold);width:28px;">${pct1}%</span>
+              <span style="font-family: 'Pretendard', sans-serif;font-size:0.62rem;color:var(--gold);width:28px;">${pct1}%</span>
               <div style="flex:1;height:4px;background:var(--border);border-radius:100px;overflow:hidden;">
                 <div style="height:100%;width:${pct1}%;background:linear-gradient(90deg,var(--gold),var(--gold2));border-radius:100px;transition:width 0.5s;"></div>
               </div>
-              <span style="font-family:'DM Mono',monospace;font-size:0.58rem;color:var(--text3);width:28px;text-align:right;">1회</span>
+              <span style="font-family: 'Pretendard', sans-serif;font-size:0.58rem;color:var(--text3);width:28px;text-align:right;">1회</span>
             </div>
             <div style="display:flex;align-items:center;gap:0.5rem;">
-              <span style="font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--text3);width:28px;">${pct2}%</span>
+              <span style="font-family: 'Pretendard', sans-serif;font-size:0.62rem;color:var(--text3);width:28px;">${pct2}%</span>
               <div style="flex:1;height:3px;background:var(--border);border-radius:100px;overflow:hidden;">
                 <div style="height:100%;width:${pct2}%;background:linear-gradient(90deg,var(--text2),var(--text3));border-radius:100px;transition:width 0.5s;"></div>
               </div>
-              <span style="font-family:'DM Mono',monospace;font-size:0.58rem;color:var(--text3);width:28px;text-align:right;">2회</span>
+              <span style="font-family: 'Pretendard', sans-serif;font-size:0.58rem;color:var(--text3);width:28px;text-align:right;">2회</span>
             </div>
           </div>
         </div>
@@ -755,8 +762,8 @@ function renderSection(type) {
       <div class="items-list collapsed">
         <div class="item-row" style="background:var(--bg3);padding:0.4rem 1rem;border-bottom:1px solid var(--border);">
           <span style="flex:1;font-size:0.72rem;color:var(--text3);">항목</span>
-          <span style="font-size:0.68rem;color:var(--gold);width:52px;text-align:center;font-family:'DM Mono',monospace;">1회독</span>
-          <span style="font-size:0.68rem;color:var(--text2);width:52px;text-align:center;font-family:'DM Mono',monospace;">2회독</span>
+          <span style="font-size:0.68rem;color:var(--gold);width:52px;text-align:center;font-family: 'Pretendard', sans-serif;">1회독</span>
+          <span style="font-size:0.68rem;color:var(--text2);width:52px;text-align:center;font-family: 'Pretendard', sans-serif;">2회독</span>
           <span style="width:24px;"></span>
         </div>
         ${group.items.map((item, ii) => {
