@@ -351,9 +351,9 @@
       </div>
       <div id="lecture-progress-bars"></div>
       <div class="lecture-add-row">
-        <input class="add-input" id="lecture-name-input" placeholder="강의 이름 (예: 민법 기본강의)" style="flex:2;" />
-        <input class="lec-count-input" id="lecture-count-input" type="number" min="1" max="300" placeholder="강의 수" />
-        <input class="add-input" id="lecture-subj-input" placeholder="과목명 (예: 민법)" style="flex:1;min-width:80px;" />
+        <input class="add-input" id="lecture-name-input" placeholder="강의 이름 (예: 민법 기본강의)" style="flex:2;" onkeydown="if(event.key==='Enter')addLectureCourse()" />
+        <input class="lec-count-input" id="lecture-count-input" type="number" min="1" max="300" placeholder="강의 수" onkeydown="if(event.key==='Enter')addLectureCourse()" />
+        <input class="add-input" id="lecture-subj-input" placeholder="과목명 (예: 민법)" style="flex:1;min-width:80px;" onkeydown="if(event.key==='Enter')addLectureCourse()" />
         <button class="add-btn" onclick="addLectureCourse()">+ 강의 추가</button>
       </div>
       <div id="lecture-courses"></div>
@@ -367,8 +367,8 @@
         <div></div>
       </div>
       <div class="add-subject-row" style="flex-wrap:wrap;gap:0.5rem;">
-      <input class="add-input" id="concept-subj-input" placeholder="과목명 (예: 민소법)" style="flex:1;min-width:100px;" />
-      <input class="add-input" id="concept-book-input" placeholder="책 제목 (예: 민사소송법 기본서)" style="flex:2;min-width:140px;" />
+      <input class="add-input" id="concept-subj-input" placeholder="과목명 (예: 민소법)" style="flex:1;min-width:100px;" onkeydown="if(event.key==='Enter')addSubject('concept')" />
+      <input class="add-input" id="concept-book-input" placeholder="책 제목 (예: 민사소송법 기본서)" style="flex:2;min-width:140px;" onkeydown="if(event.key==='Enter')addSubject('concept')" />
       <button class="add-btn" onclick="addSubject('concept')">+ 추가</button>
     </div>
       <div id="concept-groups"></div>
@@ -382,8 +382,8 @@
         <div></div>
       </div>
       <div class="add-subject-row" style="flex-wrap:wrap;gap:0.5rem;">
-      <input class="add-input" id="memo-subj-input" placeholder="과목명 (예: 형소법)" style="flex:1;min-width:100px;" />
-      <input class="add-input" id="memo-book-input" placeholder="책 제목 (예: 형사소송법 암기장)" style="flex:2;min-width:140px;" />
+      <input class="add-input" id="memo-subj-input" placeholder="과목명 (예: 형소법)" style="flex:1;min-width:100px;" onkeydown="if(event.key==='Enter')addSubject('memo')" />
+      <input class="add-input" id="memo-book-input" placeholder="책 제목 (예: 형사소송법 암기장)" style="flex:2;min-width:140px;" onkeydown="if(event.key==='Enter')addSubject('memo')" />
       <button class="add-btn" onclick="addSubject('memo')">+ 추가</button>
     </div>
       <div id="memo-groups"></div>
@@ -397,8 +397,8 @@
         <div></div>
       </div>
       <div class="add-subject-row" style="flex-wrap:wrap;gap:0.5rem;">
-      <input class="add-input" id="choice-subj-input" placeholder="과목명 (예: 헌법)" style="flex:1;min-width:100px;" />
-      <input class="add-input" id="choice-book-input" placeholder="책 제목 (예: 헌법 선택형 문제집)" style="flex:2;min-width:140px;" />
+      <input class="add-input" id="choice-subj-input" placeholder="과목명 (예: 헌법)" style="flex:1;min-width:100px;" onkeydown="if(event.key==='Enter')addSubject('choice')" />
+      <input class="add-input" id="choice-book-input" placeholder="책 제목 (예: 헌법 선택형 문제집)" style="flex:2;min-width:140px;" onkeydown="if(event.key==='Enter')addSubject('choice')" />
       <button class="add-btn" onclick="addSubject('choice')">+ 추가</button>
     </div>
       <div id="choice-groups"></div>
@@ -412,8 +412,8 @@
         <div></div>
       </div>
       <div class="add-subject-row" style="flex-wrap:wrap;gap:0.5rem;">
-      <input class="add-input" id="case-subj-input" placeholder="과목명 (예: 형법)" style="flex:1;min-width:100px;" />
-      <input class="add-input" id="case-book-input" placeholder="책 제목 (예: 형법 사례형 문제집)" style="flex:2;min-width:140px;" />
+      <input class="add-input" id="case-subj-input" placeholder="과목명 (예: 형법)" style="flex:1;min-width:100px;" onkeydown="if(event.key==='Enter')addSubject('case')" />
+      <input class="add-input" id="case-book-input" placeholder="책 제목 (예: 형법 사례형 문제집)" style="flex:2;min-width:140px;" onkeydown="if(event.key==='Enter')addSubject('case')" />
       <button class="add-btn" onclick="addSubject('case')">+ 추가</button>
     </div>
       <div id="case-groups"></div>
@@ -439,10 +439,10 @@
     </div>
     <div class="add-time-row" style="flex-direction:column;align-items:stretch;gap:0.7rem;">
       <div style="display:flex;gap:0.6rem;align-items:center;flex-wrap:wrap;">
-        <input class="time-input" id="time-start" type="text" placeholder="0900" maxlength="5" inputmode="numeric" style="width:72px;text-align:center;" />
+        <input class="time-input" id="time-start" type="text" placeholder="0900" maxlength="5" inputmode="numeric" style="width:72px;text-align:center;" onkeydown="if(event.key==='Enter')addTimeBlock()" />
         <span style="color:var(--text3);font-size:0.8rem;">~</span>
-        <input class="time-input" id="time-end" type="text" placeholder="1000" maxlength="5" inputmode="numeric" style="width:72px;text-align:center;" />
-        <input class="add-input" id="time-subject" placeholder="과목 / 내용" style="flex:1;min-width:120px;" />
+        <input class="time-input" id="time-end" type="text" placeholder="1000" maxlength="5" inputmode="numeric" style="width:72px;text-align:center;" onkeydown="if(event.key==='Enter')addTimeBlock()" />
+        <input class="add-input" id="time-subject" placeholder="과목 / 내용" style="flex:1;min-width:120px;" onkeydown="if(event.key==='Enter')addTimeBlock()" />
         <button class="add-btn" onclick="addTimeBlock()">+ 추가</button>
       </div>
       <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
