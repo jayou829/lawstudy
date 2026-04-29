@@ -555,9 +555,13 @@ function autoClearDoneItems() {
   const RESET_HOUR = 4;
   const now = new Date();
 
-  // "오늘의 기준일" 계산: 현재 시각이 새벽 4시 이전이면 전날이 기준일
+  // 새벽 4시가 지났을 때만 실행 (먼저 체크)
+  const todayReset = new Date(now);
+  todayReset.setHours(RESET_HOUR, 0, 0, 0);
+  if (now < todayReset) return; // 아직 새벽 4시 안 됨
+
+  // "오늘의 기준일" = 오늘 날짜 (새벽 4시 이후이므로 항상 오늘)
   const base = new Date(now);
-  if (now.getHours() < RESET_HOUR) base.setDate(base.getDate() - 1);
   const baseDateStr = `${base.getFullYear()}-${String(base.getMonth()+1).padStart(2,'0')}-${String(base.getDate()).padStart(2,'0')}`;
 
   const lastKey = 'checklist_last_cleared';
@@ -566,13 +570,6 @@ function autoClearDoneItems() {
   // 이미 오늘 기준일에 정리했으면 스킵
   if (lastCleared === baseDateStr) return;
 
-  // 새벽 4시가 지났을 때만 실행
-  const todayReset = new Date(now);
-  todayReset.setHours(RESET_HOUR, 0, 0, 0);
-  if (now < todayReset) return; // 아직 새벽 4시 안 됨
-
-  // 아카이브 날짜 = 기준일 (새벽 4시 이전이면 전날)
-  const archiveDate = base;
   const dateKey = baseDateStr;
 
   const doneItems = state.checklist.filter(item => item.done || item.failed);
