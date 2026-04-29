@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>STUDY</title>
+<title>STUDY TRACKER</title>
 <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
 <style>
   :root {
@@ -210,7 +210,30 @@
   .toast { position: fixed; bottom: 2rem; right: 2rem; background: var(--bg2); border: 1px solid var(--gold); color: var(--gold); padding: 0.7rem 1.2rem; border-radius: 6px; font-size: 0.78rem; font-family: 'Pretendard', sans-serif; opacity: 0; transform: translateY(10px); transition: all 0.3s; z-index: 1000; pointer-events: none; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
   .toast.show { opacity: 1; transform: translateY(0); }
 
-  ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: var(--bg); } ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 100px; }
+  /* ── 완료 기록 캘린더 ── */
+  .cl-calendar-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.05); margin-bottom: 1.2rem; }
+  .cl-cal-header { display: flex; align-items: center; justify-content: space-between; padding: 0.9rem 1.2rem; background: var(--bg3); border-bottom: 1px solid var(--border); }
+  .cl-cal-title { font-size: 0.9rem; font-weight: 600; color: var(--gold); font-family: 'Pretendard', sans-serif; }
+  .cl-cal-nav { background: none; border: 1px solid var(--border); color: var(--text2); border-radius: 6px; padding: 0.25rem 0.6rem; font-size: 0.78rem; cursor: pointer; transition: all 0.2s; }
+  .cl-cal-nav:hover { border-color: var(--gold); color: var(--gold); }
+  .cl-cal-grid { display: grid; grid-template-columns: repeat(7,1fr); }
+  .cl-cal-dow { text-align: center; font-size: 0.65rem; color: var(--text3); padding: 0.5rem 0; font-family: 'Pretendard', sans-serif; border-bottom: 1px solid var(--border); }
+  .cl-cal-dow:first-child { color: #c0392b; }
+  .cl-cal-dow:last-child { color: #2980b9; }
+  .cl-cal-day { text-align: center; padding: 0.45rem 0.2rem; font-size: 0.75rem; font-family: 'Pretendard', sans-serif; color: var(--text2); cursor: pointer; border-radius: 6px; margin: 2px; transition: all 0.15s; position: relative; }
+  .cl-cal-day:hover { background: var(--gold-dim); color: var(--gold); }
+  .cl-cal-day.has-record::after { content: ''; display: block; width: 5px; height: 5px; background: var(--gold); border-radius: 50%; margin: 2px auto 0; }
+  .cl-cal-day.selected { background: var(--gold); color: #fff; font-weight: 600; }
+  .cl-cal-day.selected::after { background: #fff; }
+  .cl-cal-day.today-cal { font-weight: 700; color: var(--gold2); }
+  .cl-cal-day.other-month { color: var(--text3); opacity: 0.4; }
+  .cl-cal-day.empty { cursor: default; }
+  .cl-record-list { padding: 0.8rem 1.2rem 1rem; }
+  .cl-record-date-title { font-size: 0.78rem; font-weight: 600; color: var(--text2); margin-bottom: 0.6rem; font-family: 'Pretendard', sans-serif; }
+  .cl-record-item { display: flex; align-items: center; gap: 0.6rem; padding: 0.45rem 0; border-bottom: 1px solid var(--border); font-size: 0.8rem; color: var(--text); }
+  .cl-record-item:last-child { border-bottom: none; }
+  .cl-record-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .cl-record-empty { color: var(--text3); font-size: 0.78rem; padding: 0.6rem 0; text-align: center; } ::-webkit-scrollbar-track { background: var(--bg); } ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 100px; }
 
   @media (max-width: 600px) {
     header { padding: 0 1rem; }
@@ -252,6 +275,7 @@
       </div>
       <div style="display:flex;align-items:center;gap:0.8rem;">
         <div class="cl-date-badge" id="cl-date-badge"></div>
+        <button class="add-btn" id="cl-cal-btn" onclick="toggleCalendarView()" style="font-size:0.72rem;padding:0.35rem 0.8rem;">📅</button>
         <button class="add-btn" id="cl-view-toggle" onclick="toggleChecklistView()" style="font-size:0.72rem;padding:0.35rem 0.8rem;">🗓️</button>
       </div>
     </div>
@@ -271,6 +295,23 @@
     <!-- 시간표 뷰 -->
     <div id="cl-view-timetable" style="display:none;">
       <div id="cl-timetable-content"></div>
+    </div>
+    <!-- 완료 기록 캘린더 뷰 -->
+    <div id="cl-view-calendar" style="display:none;">
+      <div class="cl-calendar-wrap">
+        <div class="cl-cal-header">
+          <button class="cl-cal-nav" onclick="calNavMonth(-1)">‹</button>
+          <div class="cl-cal-title" id="cl-cal-month-title"></div>
+          <button class="cl-cal-nav" onclick="calNavMonth(1)">›</button>
+        </div>
+        <div class="cl-cal-grid" id="cl-cal-dow-row">
+          <div class="cl-cal-dow">일</div><div class="cl-cal-dow">월</div><div class="cl-cal-dow">화</div>
+          <div class="cl-cal-dow">수</div><div class="cl-cal-dow">목</div><div class="cl-cal-dow">금</div>
+          <div class="cl-cal-dow">토</div>
+        </div>
+        <div class="cl-cal-grid" id="cl-cal-days"></div>
+        <div class="cl-record-list" id="cl-record-list"></div>
+      </div>
     </div>
   </div>
 
@@ -432,7 +473,8 @@ let state = {
   checklist: [],       // [{text, done}]
   lectures: [],        // [{name, total, done:[bool,...]}]
   choice:[], case:[], concept:[], memo:[],
-  weekly: {0:[],1:[],2:[],3:[],4:[],5:[],6:[]}  // 요일별 [{start,end,subject,note}]
+  weekly: {0:[],1:[],2:[],3:[],4:[],5:[],6:[]},  // 요일별 [{start,end,subject,note}]
+  doneHistory: {}      // { "YYYY-MM-DD": [{text, done, failed},...] }
 };
 let saveTimer = null;
 let firstLoad = true;
@@ -448,6 +490,7 @@ onSnapshot(docRef, (snap) => {
     state.case      = d.case      || [];
     state.concept   = d.concept   || [];
     state.memo      = d.memo      || [];
+    state.doneHistory = d.doneHistory || {};
     // weekly: 키가 숫자 문자열로 저장될 수 있으므로 보정
     const w = d.weekly || {};
     for (let i=0;i<7;i++) state.weekly[i] = w[i] || w[String(i)] || [];
@@ -472,25 +515,37 @@ onSnapshot(docRef, (snap) => {
   if (firstLoad) { firstLoad = false; document.getElementById('loadingOverlay').classList.add('hidden'); }
 });
 
-// ── 완료 항목 자동 삭제 (새벽 4시 기준) ──
+// ── 완료 항목 자동 아카이브 (새벽 4시 기준) ──
 function autoClearDoneItems() {
-  const RESET_HOUR = 4; // 새벽 4시
+  const RESET_HOUR = 4;
   const now = new Date();
-  // 오늘 새벽 4시 timestamp
   const todayReset = new Date(now);
   todayReset.setHours(RESET_HOUR, 0, 0, 0);
 
   const lastKey = 'checklist_last_cleared';
   const lastCleared = parseInt(localStorage.getItem(lastKey) || '0', 10);
 
-  // 마지막 삭제 시각이 오늘 새벽 4시보다 이전이고, 현재 시각이 오늘 새벽 4시 이후면 삭제
   if (lastCleared < todayReset.getTime() && now >= todayReset) {
+    // 아카이브 날짜: 전날 (새벽 4시 기준이므로 자정~4시는 전날로)
+    const archiveDate = new Date(todayReset.getTime() - 1); // 4시 1ms 전 = 전날
+    const dateKey = `${archiveDate.getFullYear()}-${String(archiveDate.getMonth()+1).padStart(2,'0')}-${String(archiveDate.getDate()).padStart(2,'0')}`;
+
+    const doneItems = state.checklist.filter(item => item.done || item.failed);
+    if (doneItems.length > 0) {
+      if (!state.doneHistory) state.doneHistory = {};
+      // 기존 기록에 합치기 (중복 방지)
+      const existing = state.doneHistory[dateKey] || [];
+      const existingTexts = new Set(existing.map(i => i.text));
+      const newItems = doneItems.filter(i => !existingTexts.has(i.text));
+      state.doneHistory[dateKey] = [...existing, ...newItems];
+    }
+
     const before = state.checklist.length;
-    state.checklist = state.checklist.filter(item => !item.done);
+    state.checklist = state.checklist.filter(item => !item.done && !item.failed);
     const removed = before - state.checklist.length;
     if (removed > 0) {
       scheduleSave();
-      showToast(`✓ 완료된 할 일 ${removed}개가 자동 삭제됐어요`);
+      showToast(`✓ 완료/실패 ${removed}개가 기록으로 저장됐어요`);
     }
     localStorage.setItem(lastKey, now.getTime().toString());
   }
@@ -854,25 +909,107 @@ window.delCheckItem = (i) => {
 };
 
 // ── 오늘 할 일 ↔ 시간표 전환 ──
-let clViewMode = 'checklist'; // 'checklist' | 'timetable'
+let clViewMode = 'checklist'; // 'checklist' | 'timetable' | 'calendar'
+let calYear, calMonth, calSelectedDate;
+
+function setClView(mode) {
+  document.getElementById('cl-view-checklist').style.display = mode === 'checklist' ? 'block' : 'none';
+  document.getElementById('cl-view-timetable').style.display = mode === 'timetable' ? 'block' : 'none';
+  document.getElementById('cl-view-calendar').style.display  = mode === 'calendar'  ? 'block' : 'none';
+  clViewMode = mode;
+}
 
 window.toggleChecklistView = () => {
-  const checklistEl = document.getElementById('cl-view-checklist');
-  const timetableEl = document.getElementById('cl-view-timetable');
-  const btn = document.getElementById('cl-view-toggle');
-  if (clViewMode === 'checklist') {
-    clViewMode = 'timetable';
-    checklistEl.style.display = 'none';
-    timetableEl.style.display = 'block';
-    btn.textContent = '✅';
+  if (clViewMode !== 'timetable') {
+    setClView('timetable');
+    document.getElementById('cl-view-toggle').textContent = '✅';
     renderTodayTimetable();
   } else {
-    clViewMode = 'checklist';
-    timetableEl.style.display = 'none';
-    checklistEl.style.display = 'block';
-    btn.textContent = '🗓️';
+    setClView('checklist');
+    document.getElementById('cl-view-toggle').textContent = '🗓️';
   }
 };
+
+window.toggleCalendarView = () => {
+  if (clViewMode !== 'calendar') {
+    const now = new Date();
+    calYear = now.getFullYear(); calMonth = now.getMonth();
+    calSelectedDate = null;
+    setClView('calendar');
+    document.getElementById('cl-cal-btn').textContent = '✅';
+    document.getElementById('cl-view-toggle').textContent = '🗓️';
+    renderCalendar();
+  } else {
+    setClView('checklist');
+    document.getElementById('cl-cal-btn').textContent = '📅';
+  }
+};
+
+window.calNavMonth = (dir) => {
+  calMonth += dir;
+  if (calMonth > 11) { calMonth = 0; calYear++; }
+  if (calMonth < 0)  { calMonth = 11; calYear--; }
+  calSelectedDate = null;
+  renderCalendar();
+};
+
+function renderCalendar() {
+  const monthNames = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+  document.getElementById('cl-cal-month-title').textContent = `${calYear}년 ${monthNames[calMonth]}`;
+
+  const history = state.doneHistory || {};
+  const now = new Date();
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+
+  const firstDay = new Date(calYear, calMonth, 1).getDay(); // 0=일
+  const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
+
+  let html = '';
+  for (let i = 0; i < firstDay; i++) html += `<div class="cl-cal-day empty"></div>`;
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateKey = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const hasRecord = !!(history[dateKey] && history[dateKey].length > 0);
+    const isToday = dateKey === todayStr;
+    const isSelected = dateKey === calSelectedDate;
+    const cls = [
+      'cl-cal-day',
+      hasRecord ? 'has-record' : '',
+      isToday ? 'today-cal' : '',
+      isSelected ? 'selected' : ''
+    ].filter(Boolean).join(' ');
+    html += `<div class="${cls}" onclick="selectCalDate('${dateKey}')">${d}</div>`;
+  }
+  document.getElementById('cl-cal-days').innerHTML = html;
+  renderCalRecord(calSelectedDate);
+}
+
+window.selectCalDate = (dateKey) => {
+  calSelectedDate = dateKey;
+  renderCalendar();
+};
+
+function renderCalRecord(dateKey) {
+  const el = document.getElementById('cl-record-list');
+  if (!dateKey) { el.innerHTML = ''; return; }
+  const history = state.doneHistory || {};
+  const items = history[dateKey] || [];
+  const [y, m, d] = dateKey.split('-');
+  const label = `${y}년 ${parseInt(m)}월 ${parseInt(d)}일`;
+
+  if (items.length === 0) {
+    el.innerHTML = `<div class="cl-record-date-title">${label}</div><div class="cl-record-empty">기록된 항목이 없어요</div>`;
+    return;
+  }
+  const rows = items.map(item => {
+    const color = item.done ? 'var(--green2)' : 'var(--red)';
+    const strike = item.failed ? 'text-decoration:line-through;color:var(--text3);' : '';
+    return `<div class="cl-record-item">
+      <div class="cl-record-dot" style="background:${color};"></div>
+      <span style="${strike}">${item.text}</span>
+    </div>`;
+  }).join('');
+  el.innerHTML = `<div class="cl-record-date-title">${label} · ${items.length}개</div>${rows}`;
+}
 
 function renderTodayTimetable() {
   const now = new Date();
