@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>STUDY TRACKER</title>
+<title>STUDY</title>
 <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
 <style>
   :root {
@@ -218,16 +218,14 @@
   .cl-cal-nav:hover { border-color: var(--gold); color: var(--gold); }
   .cl-cal-grid { display: grid; grid-template-columns: repeat(7,1fr); }
   .cl-cal-dow { text-align: center; font-size: 0.65rem; color: var(--text3); padding: 0.5rem 0; font-family: 'Pretendard', sans-serif; border-bottom: 1px solid var(--border); }
-  .cl-cal-dow:first-child { color: #c0392b; }
-  .cl-cal-dow:last-child { color: #2980b9; }
-  .cl-cal-day { text-align: center; padding: 0.45rem 0.2rem; font-size: 0.75rem; font-family: 'Pretendard', sans-serif; color: var(--text2); cursor: pointer; border-radius: 6px; margin: 2px; transition: all 0.15s; position: relative; }
+  .cl-cal-day { text-align: center; padding: 0.45rem 0.2rem 0.6rem; font-size: 0.75rem; font-family: 'Pretendard', sans-serif; color: var(--text2); cursor: pointer; border-radius: 6px; margin: 2px; transition: all 0.15s; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 36px; }
   .cl-cal-day:hover { background: var(--gold-dim); color: var(--gold); }
-  .cl-cal-day.has-record::after { content: ''; display: block; width: 5px; height: 5px; background: var(--gold); border-radius: 50%; margin: 2px auto 0; }
-  .cl-cal-day.selected { background: var(--gold); color: #fff; font-weight: 600; }
+  .cl-cal-day .day-num { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; }
+  .cl-cal-day.today-cal .day-num { border: 1.5px solid var(--gold); font-weight: 700; }
+  .cl-cal-day.selected .day-num { background: var(--gold); color: #fff; font-weight: 600; }
+  .cl-cal-day.today-cal.selected .day-num { border-color: rgba(255,255,255,0.6); }
+  .cl-cal-day.has-record::after { content: ''; display: block; width: 4px; height: 4px; background: var(--gold); border-radius: 50%; }
   .cl-cal-day.selected::after { background: #fff; }
-  .cl-cal-day.today-cal { font-weight: 700; }
-  .cl-cal-day.today-cal::before { content: ''; position: absolute; inset: 1px; border: 1.5px solid var(--gold); border-radius: 50%; pointer-events: none; }
-  .cl-cal-day.today-cal.selected::before { border-color: rgba(255,255,255,0.7); }
   .cl-cal-day.other-month { color: var(--text3); opacity: 0.4; }
   .cl-cal-day.empty { cursor: default; }
   .cl-record-list { padding: 0.8rem 1.2rem 1rem; }
@@ -443,9 +441,9 @@
         <button class="cl-cal-nav" onclick="calNavMonth(1)">›</button>
       </div>
       <div class="cl-cal-grid">
-        <div class="cl-cal-dow">일</div><div class="cl-cal-dow">월</div><div class="cl-cal-dow">화</div>
-        <div class="cl-cal-dow">수</div><div class="cl-cal-dow">목</div><div class="cl-cal-dow">금</div>
-        <div class="cl-cal-dow">토</div>
+        <div class="cl-cal-dow">월</div><div class="cl-cal-dow">화</div><div class="cl-cal-dow">수</div>
+        <div class="cl-cal-dow">목</div><div class="cl-cal-dow">금</div><div class="cl-cal-dow" style="color:#2980b9;">토</div>
+        <div class="cl-cal-dow" style="color:#c0392b;">일</div>
       </div>
       <div class="cl-cal-grid" id="cl-cal-days"></div>
       <div class="cl-record-list" id="cl-record-list"></div>
@@ -970,10 +968,11 @@ function renderCalendar() {
   const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
 
   const firstDay = new Date(calYear, calMonth, 1).getDay(); // 0=일
+  const firstDayMon = (firstDay + 6) % 7; // 월요일 기준으로 변환 (월=0)
   const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
 
   let html = '';
-  for (let i = 0; i < firstDay; i++) html += `<div class="cl-cal-day empty"></div>`;
+  for (let i = 0; i < firstDayMon; i++) html += `<div class="cl-cal-day empty"></div>`;
   for (let d = 1; d <= daysInMonth; d++) {
     const dateKey = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const hasRecord = !!(history[dateKey] && history[dateKey].length > 0);
@@ -985,7 +984,7 @@ function renderCalendar() {
       isToday ? 'today-cal' : '',
       isSelected ? 'selected' : ''
     ].filter(Boolean).join(' ');
-    html += `<div class="${cls}" onclick="selectCalDate('${dateKey}')">${d}</div>`;
+    html += `<div class="${cls}" onclick="selectCalDate('${dateKey}')"><span class="day-num">${d}</span></div>`;
   }
   document.getElementById('cl-cal-days').innerHTML = html;
   renderCalRecord(calSelectedDate);
