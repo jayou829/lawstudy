@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>STUDY TRACKER</title>
+<title>STUDY</title>
 <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
 <style>
   :root {
@@ -566,142 +566,137 @@ window.toggleTrackerViewMode = () => {
   if (isSubject) renderSubjectOverview();
 };
 
-// 전체 과목 목록 수집 (강의 제외, concept/memo/choice/case)
-// 같은 과목명이라도 책이 다르면 별개로 취급
+// 전체 과목 목록 수집 (강의 제외, concept/memo/choice/case) - 과목명만 유니크하게
 function getAllSubjectNames() {
   const types = ['concept','memo','choice','case'];
-  const keys = new Set();
-  types.forEach(t => (state[t]||[]).forEach(g => {
-    const key = g.book ? `${g.name}||${g.book}` : g.name;
-    keys.add(key);
-  }));
-  // name만 추출해 정렬 (표시용)
-  return [...keys].sort((a,b) => a.split('||')[0].localeCompare(b.split('||')[0]));
+  const names = new Set();
+  types.forEach(t => (state[t]||[]).forEach(g => names.add(g.name)));
+  return [...names].sort();
 }
 
 // 과목별 카드 렌더
 function renderSubjectOverview() {
   const grid = document.getElementById('subjectOverviewGrid');
   if (!grid) return;
-  const subjectKeys = getAllSubjectNames();
+  const subjects = getAllSubjectNames();
   const types = ['concept','memo','choice','case'];
   const typeNames = { concept:'개념서', memo:'암기장', choice:'선택형', case:'사례형' };
 
-  if (subjectKeys.length === 0) {
+  if (subjects.length === 0) {
     grid.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--text3);font-size:0.82rem;grid-column:1/-1;">과목을 먼저 추가해 주세요</div>';
     return;
   }
 
-  grid.innerHTML = subjectKeys.map(subjectKey => {
-    const [subj, book] = subjectKey.split('||');
-    const rows = types.map(t => {
-      // book이 있으면 name+book 일치, 없으면 name만 일치하는 것 중 book 없는 것
-      const group = (state[t]||[]).find(g => {
-        if (book) return g.name === subj && g.book === book;
-        return g.name === subj && !g.book;
-      }) || (book ? null : (state[t]||[]).find(g => g.name === subj));
-      if (!group) return null;
-      const total = group.items.length;
-      const done1 = group.items.filter(i=>i.done).length;
-      const done2 = group.items.filter(i=>i.done2).length;
-      const pct1 = total ? Math.round(done1/total*100) : 0;
-      const pct2 = total ? Math.round(done2/total*100) : 0;
-      return { type: t, name: typeNames[t], pct1, pct2, done1, done2, total };
-    }).filter(Boolean);
+  grid.innerHTML = subjects.map(subj => {
+    // 각 타입별로 같은 과목명의 그룹을 모두 수집
+    const rows = [];
+    types.forEach(t => {
+      const groups = (state[t]||[]).filter(g => g.name === subj);
+      groups.forEach(group => {
+        const total = group.items.length;
+        const done1 = group.items.filter(i=>i.done).length;
+        const done2 = group.items.filter(i=>i.done2).length;
+        const pct1 = total ? Math.round(done1/total*100) : 0;
+        const pct2 = total ? Math.round(done2/total*100) : 0;
+        rows.push({ type: t, typeName: typeNames[t], book: group.book||'', pct1, pct2, done1, done2, total });
+      });
+    });
 
     if (rows.length === 0) return '';
 
-    const avgPct = Math.round(rows.reduce((s,r)=>s+r.pct1,0)/rows.length);
-    const displayName = book ? `${subj} <span style="font-size:0.72rem;color:var(--text3);font-weight:400;">${book}</span>` : subj;
+    const rowsHtml = rows.map(r => {
+      const label = r.book
+        ? `<span style="font-size:0.62rem;color:var(--text3);">${r.typeName}</span><span style="font-size:0.6rem;color:var(--text3);margin-left:3px;opacity:0.7;">${r.book}</span>`
+        : `<span style="font-size:0.62rem;color:var(--text3);">${r.typeName}</span>`;
+      return `
+        <div class="subject-card-row" style="align-items:flex-start;flex-direction:column;gap:3px;margin-bottom:2px;">
+          <div style="display:flex;align-items:center;gap:4px;width:100%;">
+            <span class="subject-card-label" style="width:auto;flex-shrink:0;max-width:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:0.62rem;color:var(--text3);">${r.typeName}${r.book ? ` <span style='opacity:0.65'>${r.book}</span>` : ''}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:0.5rem;width:100%;">
+            <div class="subject-card-bar-wrap" style="flex:1;">
+              <div class="subject-card-bar-fill" style="width:${r.pct1}%;background:linear-gradient(90deg,var(--gold),var(--gold2));"></div>
+            </div>
+            <span class="subject-card-pct" style="color:var(--gold)">${r.pct1}%</span>
+          </div>
+          ${r.pct2 > 0 ? `<div style="display:flex;align-items:center;gap:0.5rem;width:100%;">
+            <div class="subject-card-bar-wrap" style="flex:1;">
+              <div class="subject-card-bar-fill" style="width:${r.pct2}%;background:linear-gradient(90deg,var(--text2),var(--text3));"></div>
+            </div>
+            <span class="subject-card-pct">${r.pct2}%</span>
+          </div>` : ''}
+        </div>`;
+    }).join('');
 
-    const rowsHtml = rows.map(r => `
-      <div class="subject-card-row">
-        <span class="subject-card-label">${r.name}</span>
-        <div class="subject-card-bar-wrap">
-          <div class="subject-card-bar-fill" style="width:${r.pct1}%;background:linear-gradient(90deg,var(--gold),var(--gold2));"></div>
-        </div>
-        <span class="subject-card-pct" style="color:var(--gold)">${r.pct1}%</span>
-      </div>
-      ${r.pct2 > 0 ? `<div class="subject-card-row">
-        <span class="subject-card-label" style="color:transparent">.</span>
-        <div class="subject-card-bar-wrap">
-          <div class="subject-card-bar-fill" style="width:${r.pct2}%;background:linear-gradient(90deg,var(--text2),var(--text3));"></div>
-        </div>
-        <span class="subject-card-pct">${r.pct2}%</span>
-      </div>` : ''}
-    `).join('');
-
-    const safeKey = encodeURIComponent(subjectKey);
-    return `<div class="subject-card" onclick="showSubjectDetail('${safeKey}', true)">
-      <div class="subject-card-name">${displayName}</div>
+    return `<div class="subject-card" onclick="showSubjectDetail('${subj.replace(/'/g,"\\'")}')">
+      <div class="subject-card-name">${subj}</div>
       ${rowsHtml}
     </div>`;
   }).join('');
 }
 
 // 과목별 상세 뷰
-window.showSubjectDetail = (subjectKeyEncoded, isEncoded) => {
-  const subjectKey = isEncoded ? decodeURIComponent(subjectKeyEncoded) : subjectKeyEncoded;
-  const [subj, book] = subjectKey.split('||');
-
+window.showSubjectDetail = (subj) => {
   TRACKER_VIEWS.forEach(v => {
     const el = document.getElementById('tracker-view-' + v);
     if (el) el.style.display = v === 'subject-detail' ? 'block' : 'none';
   });
-  const displayTitle = book ? `${subj} · ${book}` : subj;
-  document.getElementById('subject-detail-title').textContent = displayTitle;
-  // store key for toggleItem refresh
-  document.getElementById('subject-detail-title').dataset.subjectKey = subjectKey;
+  document.getElementById('subject-detail-title').textContent = subj;
+  document.getElementById('subject-detail-title').dataset.subjectKey = subj;
 
   const types = ['concept','memo','choice','case'];
   const typeNames = { concept:'개념서', memo:'암기장', choice:'선택형', case:'사례형' };
   const content = document.getElementById('subject-detail-content');
 
-  const html = types.map(t => {
-    // match by name+book
-    const group = (state[t]||[]).find(g => {
-      if (book) return g.name === subj && g.book === book;
-      return g.name === subj && !g.book;
-    }) || (book ? null : (state[t]||[]).find(g => g.name === subj));
-    if (!group || group.items.length === 0) return '';
-    const total = group.items.length;
-    const done1 = group.items.filter(i=>i.done).length;
-    const done2 = group.items.filter(i=>i.done2).length;
-    const pct1 = total ? Math.round(done1/total*100) : 0;
-    const pct2 = total ? Math.round(done2/total*100) : 0;
-    const gi = (state[t]||[]).indexOf(group);
+  // 각 타입별로 같은 과목의 그룹을 모두 수집 (책 여러 권 지원)
+  const blocks = [];
+  types.forEach(t => {
+    const groups = (state[t]||[]).filter(g => g.name === subj);
+    groups.forEach(group => {
+      const gi = (state[t]||[]).indexOf(group);
+      if (group.items.length === 0) return;
+      const total = group.items.length;
+      const done1 = group.items.filter(i=>i.done).length;
+      const done2 = group.items.filter(i=>i.done2).length;
+      const pct1 = total ? Math.round(done1/total*100) : 0;
+      const pct2 = total ? Math.round(done2/total*100) : 0;
 
-    const itemsHtml = group.items.map((item, ii) => {
-      const rowDone = item.done && item.done2;
-      return `<div class="item-row ${rowDone?'done':''}">
-        <span class="item-label" style="${rowDone?'color:var(--text3);text-decoration:line-through;':''}">${item.label}</span>
-        <div style="display:flex;gap:6px;align-items:center;margin-left:auto;">
-          <div class="check-dot ${item.done?'done':''}" onclick="toggleItem('${t}',${gi},${ii},1)" title="1회독"></div>
-          <div class="check-dot ${item.done2?'done':''}" onclick="toggleItem('${t}',${gi},${ii},2)" title="2회독"></div>
-        </div>
-      </div>`;
-    }).join('');
+      const itemsHtml = group.items.map((item, ii) => {
+        const rowDone = item.done && item.done2;
+        return `<div class="item-row ${rowDone?'done':''}">
+          <span class="item-label" style="${rowDone?'color:var(--text3);text-decoration:line-through;':''}">${item.label}</span>
+          <div style="display:flex;gap:6px;align-items:center;margin-left:auto;">
+            <div class="check-dot ${item.done?'done':''}" onclick="toggleItem('${t}',${gi},${ii},1)" title="1회독"></div>
+            <div class="check-dot ${item.done2?'done':''}" onclick="toggleItem('${t}',${gi},${ii},2)" title="2회독"></div>
+          </div>
+        </div>`;
+      }).join('');
 
-    return `<div class="subject-detail-type">
-      <div class="subject-detail-type-header" onclick="this.nextElementSibling.classList.toggle('collapsed')">
-        <span>${typeNames[t]}</span>
-        <div style="display:flex;align-items:center;gap:0.5rem;">
-          <span class="subject-detail-badge">1회 ${done1}/${total} (${pct1}%) · 2회 ${done2}/${total} (${pct2}%)</span>
-          <span style="font-size:0.65rem;color:var(--text3);">▼</span>
-        </div>
-      </div>
-      <div class="items-list">
-        <div class="item-row" style="background:var(--bg3);padding:0.4rem 1rem;border-bottom:1px solid var(--border);">
-          <span style="flex:1;font-size:0.72rem;color:var(--text3);">항목</span>
-          <span style="font-size:0.68rem;color:var(--gold);width:52px;text-align:center;font-family:'Pretendard',sans-serif;">1회독</span>
-          <span style="font-size:0.68rem;color:var(--text2);width:52px;text-align:center;font-family:'Pretendard',sans-serif;">2회독</span>
-        </div>
-        ${itemsHtml}
-      </div>
-    </div>`;
-  }).join('');
+      const headerLabel = group.book
+        ? `${typeNames[t]} <span style="font-size:0.72rem;color:var(--text3);font-weight:400;">${group.book}</span>`
+        : typeNames[t];
 
-  content.innerHTML = html || `<div style="padding:2rem;text-align:center;color:var(--text3);font-size:0.82rem;">이 과목의 진도 데이터가 없어요</div>`;
+      blocks.push(`<div class="subject-detail-type">
+        <div class="subject-detail-type-header" onclick="this.nextElementSibling.classList.toggle('collapsed')">
+          <span>${headerLabel}</span>
+          <div style="display:flex;align-items:center;gap:0.5rem;">
+            <span class="subject-detail-badge">1회 ${done1}/${total} (${pct1}%) · 2회 ${done2}/${total} (${pct2}%)</span>
+            <span style="font-size:0.65rem;color:var(--text3);">▼</span>
+          </div>
+        </div>
+        <div class="items-list">
+          <div class="item-row" style="background:var(--bg3);padding:0.4rem 1rem;border-bottom:1px solid var(--border);">
+            <span style="flex:1;font-size:0.72rem;color:var(--text3);">항목</span>
+            <span style="font-size:0.68rem;color:var(--gold);width:52px;text-align:center;font-family:'Pretendard',sans-serif;">1회독</span>
+            <span style="font-size:0.68rem;color:var(--text2);width:52px;text-align:center;font-family:'Pretendard',sans-serif;">2회독</span>
+          </div>
+          ${itemsHtml}
+        </div>
+      </div>`);
+    });
+  });
+
+  content.innerHTML = blocks.join('') || `<div style="padding:2rem;text-align:center;color:var(--text3);font-size:0.82rem;">이 과목의 진도 데이터가 없어요</div>`;
 };
 
 function renderTrackerOverview() {
@@ -1065,9 +1060,8 @@ window.toggleItem = (type, gi, ii, round) => {
   // 과목별 상세 뷰가 열려 있으면 함께 갱신
   const detailEl = document.getElementById('tracker-view-subject-detail');
   if (detailEl && detailEl.style.display !== 'none') {
-    const titleEl = document.getElementById('subject-detail-title');
-    const subjectKey = titleEl.dataset.subjectKey || titleEl.textContent;
-    showSubjectDetail(encodeURIComponent(subjectKey), true);
+    const subj = document.getElementById('subject-detail-title').textContent;
+    showSubjectDetail(subj);
   }
 };
 
