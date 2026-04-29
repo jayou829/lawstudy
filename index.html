@@ -254,6 +254,7 @@
 <header>
   <div class="logo"><div class="logo-icon">⚖</div></div>
   <div class="header-right">
+    <button onclick="resetAllData()" style="background:none;border:1px solid var(--border);color:var(--text3);border-radius:6px;padding:0.25rem 0.65rem;font-size:0.7rem;font-family:'Pretendard',sans-serif;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.borderColor='var(--red)';this.style.color='var(--red)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text3)'">초기화</button>
     <div class="sync-status" id="syncStatus">연결 중</div>
     <div class="today-info" id="todayInfo"></div>
   </div>
@@ -568,6 +569,35 @@ function scheduleSave() {
     } catch(e) { setSyncStatus('error', '저장 실패'); }
   }, 600);
 }
+
+window.resetAllData = async () => {
+  if (!confirm('모든 데이터를 초기화할까요?\n체크리스트, 진도표, 강의, 시간표, 완료 기록이 모두 삭제돼요.')) return;
+  if (!confirm('정말로요? 이 작업은 되돌릴 수 없어요.')) return;
+  state = {
+    checklist: [],
+    lectures: [],
+    choice: [], case: [], concept: [], memo: [],
+    weekly: {0:[],1:[],2:[],3:[],4:[],5:[],6:[]},
+    doneHistory: {}
+  };
+  try {
+    setSyncStatus('syncing', '저장 중...');
+    const weekly = {};
+    for (let i=0;i<7;i++) weekly[i] = [];
+    await setDoc(docRef, { ...state, weekly });
+    setSyncStatus('synced', '✓ 동기화됨');
+    renderChecklist();
+    renderLectures();
+    TRACKER_KEYS.forEach(renderSection);
+    renderWeekDay(currentWeekDay);
+    renderTrackerOverview();
+    renderCalendar();
+    showToast('✓ 모든 데이터가 초기화됐어요');
+  } catch(e) {
+    setSyncStatus('error', '저장 실패');
+    showToast('초기화 중 오류가 발생했어요');
+  }
+};
 
 function setSyncStatus(cls, text) {
   const el = document.getElementById('syncStatus');
