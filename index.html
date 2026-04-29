@@ -281,7 +281,7 @@
     <div id="tracker-view-main">
       <div class="section-header">
         <div class="section-title">📊 진도표</div>
-        <button class="view-toggle-btn" id="btn-view-toggle" onclick="toggleTrackerViewMode()">과목별로 보기</button>
+        <button class="view-toggle-btn" id="btn-view-toggle" onclick="toggleTrackerViewMode()" title="공부방법별 / 과목별 전환">⇄</button>
       </div>
       <!-- 공부방법별 그리드 -->
       <div id="tracker-grid-method">
@@ -325,7 +325,11 @@
         <div class="section-title">개념서</div>
         <div></div>
       </div>
-      <div class="add-subject-row"><input class="add-input" id="concept-subj-input" placeholder="과목명 (예: 민소법)" /><button class="add-btn" onclick="addSubject('concept')">+ 과목 추가</button></div>
+      <div class="add-subject-row" style="flex-wrap:wrap;gap:0.5rem;">
+      <input class="add-input" id="concept-subj-input" placeholder="과목명 (예: 민소법)" style="flex:1;min-width:100px;" />
+      <input class="add-input" id="concept-book-input" placeholder="책 제목 (예: 민사소송법 기본서)" style="flex:2;min-width:140px;" />
+      <button class="add-btn" onclick="addSubject('concept')">+ 추가</button>
+    </div>
       <div id="concept-groups"></div>
     </div>
 
@@ -336,7 +340,11 @@
         <div class="section-title">암기장</div>
         <div></div>
       </div>
-      <div class="add-subject-row"><input class="add-input" id="memo-subj-input" placeholder="과목명 (예: 형소법)" /><button class="add-btn" onclick="addSubject('memo')">+ 과목 추가</button></div>
+      <div class="add-subject-row" style="flex-wrap:wrap;gap:0.5rem;">
+      <input class="add-input" id="memo-subj-input" placeholder="과목명 (예: 형소법)" style="flex:1;min-width:100px;" />
+      <input class="add-input" id="memo-book-input" placeholder="책 제목 (예: 형사소송법 암기장)" style="flex:2;min-width:140px;" />
+      <button class="add-btn" onclick="addSubject('memo')">+ 추가</button>
+    </div>
       <div id="memo-groups"></div>
     </div>
 
@@ -347,7 +355,11 @@
         <div class="section-title">선택형</div>
         <div></div>
       </div>
-      <div class="add-subject-row"><input class="add-input" id="choice-subj-input" placeholder="과목명 (예: 헌법)" /><button class="add-btn" onclick="addSubject('choice')">+ 과목 추가</button></div>
+      <div class="add-subject-row" style="flex-wrap:wrap;gap:0.5rem;">
+      <input class="add-input" id="choice-subj-input" placeholder="과목명 (예: 헌법)" style="flex:1;min-width:100px;" />
+      <input class="add-input" id="choice-book-input" placeholder="책 제목 (예: 헌법 선택형 문제집)" style="flex:2;min-width:140px;" />
+      <button class="add-btn" onclick="addSubject('choice')">+ 추가</button>
+    </div>
       <div id="choice-groups"></div>
     </div>
 
@@ -358,7 +370,11 @@
         <div class="section-title">사례형</div>
         <div></div>
       </div>
-      <div class="add-subject-row"><input class="add-input" id="case-subj-input" placeholder="과목명 (예: 형법)" /><button class="add-btn" onclick="addSubject('case')">+ 과목 추가</button></div>
+      <div class="add-subject-row" style="flex-wrap:wrap;gap:0.5rem;">
+      <input class="add-input" id="case-subj-input" placeholder="과목명 (예: 형법)" style="flex:1;min-width:100px;" />
+      <input class="add-input" id="case-book-input" placeholder="책 제목 (예: 형법 사례형 문제집)" style="flex:2;min-width:140px;" />
+      <button class="add-btn" onclick="addSubject('case')">+ 추가</button>
+    </div>
       <div id="case-groups"></div>
     </div>
 
@@ -521,7 +537,7 @@ window.showTrackerMain = function showTrackerMain() {
   const isSubject = trackerViewMode === 'subject';
   document.getElementById('tracker-grid-method').style.display = isSubject ? 'none' : 'block';
   document.getElementById('tracker-grid-subject').style.display = isSubject ? 'block' : 'none';
-  document.getElementById('btn-view-toggle').textContent = isSubject ? '공부방법별로 보기' : '과목별로 보기';
+  document.getElementById('btn-view-toggle').textContent = '⇄';
   if (isSubject) renderSubjectOverview();
 }
 
@@ -538,7 +554,7 @@ let trackerViewMode = 'method'; // 'method' | 'subject'
 window.toggleTrackerViewMode = () => {
   trackerViewMode = trackerViewMode === 'method' ? 'subject' : 'method';
   const isSubject = trackerViewMode === 'subject';
-  document.getElementById('btn-view-toggle').textContent = isSubject ? '공부방법별로 보기' : '과목별로 보기';
+  document.getElementById('btn-view-toggle').textContent = '⇄';
   document.getElementById('tracker-grid-method').style.display = isSubject ? 'none' : 'block';
   document.getElementById('tracker-grid-subject').style.display = isSubject ? 'block' : 'none';
   if (isSubject) renderSubjectOverview();
@@ -916,6 +932,9 @@ window.delLectureCourse = (ci) => {
   showToast('강의가 삭제됐어요');
 };
 
+// ── 일반 진도표 열림 상태 메모리 ──
+const openGroups = {}; // { type: Set<gi> }
+
 // ── 일반 진도표 (1회독/2회독 지원) ──
 function renderSection(type) {
   const groups = state[type] || [];
@@ -934,8 +953,9 @@ function renderSection(type) {
     div.innerHTML = `
       <div class="subject-title-row" onclick="toggleGroup(this)">
         <div style="flex:1;min-width:0;">
-          <div class="subject-name" style="margin-bottom:0.45rem;">
+          <div class="subject-name" style="margin-bottom:0.2rem;">
             ${group.name}
+            ${group.book ? `<span style="font-size:0.72rem;color:var(--text3);font-weight:400;margin-left:0.4rem;">${group.book}</span>` : ''}
             <span class="subject-badge">1회 ${done1}/${total} · 2회 ${done2}/${total}</span>
           </div>
           <div style="display:flex;flex-direction:column;gap:3px;">
@@ -958,9 +978,9 @@ function renderSection(type) {
         <div style="display:flex;align-items:center;gap:0.3rem;margin-left:0.5rem;" onclick="event.stopPropagation()">
           <button class="del-btn" style="opacity:0.6;font-size:0.7rem;padding:0.2rem 0.5rem;" onclick="delSubject('${type}',${gi})">삭제</button>
         </div>
-        <span class="subject-chevron" style="margin-left:0.4rem;">▼</span>
+        <span class="subject-chevron ${(openGroups[type]||new Set()).has(group.name) ? 'open' : ''}" style="margin-left:0.4rem;">▼</span>
       </div>
-      <div class="items-list collapsed">
+      <div class="items-list ${(openGroups[type]||new Set()).has(group.name) ? '' : 'collapsed'}">
         <div class="item-row" style="background:var(--bg3);padding:0.4rem 1rem;border-bottom:1px solid var(--border);">
           <span style="flex:1;font-size:0.72rem;color:var(--text3);">항목</span>
           <span style="font-size:0.68rem;color:var(--gold);width:52px;text-align:center;font-family: 'Pretendard', sans-serif;">1회독</span>
@@ -995,6 +1015,14 @@ window.toggleGroup = (header) => {
   const open = chevron.classList.contains('open');
   chevron.classList.toggle('open', !open);
   list.classList.toggle('collapsed', open);
+  // openGroups 업데이트
+  const groupEl = header.closest('.subject-group');
+  const container = groupEl.parentElement;
+  const type = container.id.replace('-groups', '');
+  const gi = Array.from(container.children).indexOf(groupEl);
+  const groupName = (state[type]||[])[gi]?.name;
+  if (!openGroups[type]) openGroups[type] = new Set();
+  if (!open) openGroups[type].add(groupName); else openGroups[type].delete(groupName);
 };
 
 window.toggleItem = (type, gi, ii, round) => {
@@ -1030,12 +1058,15 @@ window.addItem = (type, gi) => {
 };
 
 window.addSubject = (type) => {
-  const inp = document.getElementById(type+'-subj-input');
-  const name = inp.value.trim();
-  if (!name) return;
+  const subjInp = document.getElementById(type+'-subj-input');
+  const bookInp = document.getElementById(type+'-book-input');
+  const name = subjInp.value.trim();
+  const book = bookInp ? bookInp.value.trim() : '';
+  if (!name) { showToast('과목명을 입력해 주세요'); return; }
   if (!state[type]) state[type] = [];
-  state[type].push({name, items:[]});
-  inp.value = '';
+  state[type].push({name, book, items:[]});
+  subjInp.value = '';
+  if (bookInp) bookInp.value = '';
   renderSection(type); scheduleSave();
   showToast(`"${name}" 과목이 추가됐어요`);
 };
