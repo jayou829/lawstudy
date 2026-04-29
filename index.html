@@ -1502,10 +1502,6 @@ function renderWeekDay(dayIdx) {
         <input class="time-subject-input" placeholder="과목 / 내용" value="${escHtml(block.subject||'')}" onchange="updateWeekBlock(${dayIdx},${bi},'subject',this.value)" />
         <button class="del-btn" style="opacity:1;color:var(--text3);" onclick="delWeekBlock(${dayIdx},${bi})">✕</button>
       </div>
-      <div class="time-block-body">
-        ${cats.length > 0 ? `<div class="cat-tags-row" style="margin-bottom:0.5rem;">${catSelect}</div>` : ''}
-        <textarea class="time-note" rows="2" placeholder="메모..." onchange="updateWeekBlock(${dayIdx},${bi},'note',this.value)">${escHtml(block.note||'')}</textarea>
-      </div>
     </div>`;
   }).join('');
 }
