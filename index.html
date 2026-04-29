@@ -74,6 +74,9 @@
   .item-row.done .item-label { color: var(--text3); text-decoration: line-through; }
   .check-box { width: 18px; height: 18px; border: 1.5px solid var(--border); border-radius: 4px; flex-shrink: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; transition: all 0.2s; background: var(--bg); }
   .check-box.checked { background: var(--green2); border-color: var(--green2); color: #fff; }
+  .check-dot { width: 18px; height: 18px; border: 1.5px solid var(--border); border-radius: 50%; flex-shrink: 0; cursor: pointer; transition: all 0.2s; background: var(--bg); }
+  .check-dot.done { background: var(--green2); border-color: var(--green2); }
+  .check-dot:hover { border-color: var(--gold); }
   .item-label { font-size: 0.82rem; color: var(--text); flex: 1; line-height: 1.4; cursor: pointer; }
   .item-num { font-family: 'Pretendard', sans-serif; font-size: 0.68rem; color: var(--text3); min-width: 2.2rem; text-align: right; }
   .del-btn { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 0.7rem; padding: 0.2rem 0.4rem; border-radius: 4px; transition: all 0.2s; opacity: 0; }
@@ -278,10 +281,7 @@
     <div id="tracker-view-main">
       <div class="section-header">
         <div class="section-title">📊 진도표</div>
-        <div style="display:flex;gap:0.4rem;">
-          <button class="view-toggle-btn active" id="btn-view-method" onclick="setTrackerViewMode('method')">공부방법별</button>
-          <button class="view-toggle-btn" id="btn-view-subject" onclick="setTrackerViewMode('subject')">과목별</button>
-        </div>
+        <button class="view-toggle-btn" id="btn-view-toggle" onclick="toggleTrackerViewMode()">과목별로 보기</button>
       </div>
       <!-- 공부방법별 그리드 -->
       <div id="tracker-grid-method">
@@ -521,6 +521,7 @@ window.showTrackerMain = function showTrackerMain() {
   const isSubject = trackerViewMode === 'subject';
   document.getElementById('tracker-grid-method').style.display = isSubject ? 'none' : 'block';
   document.getElementById('tracker-grid-subject').style.display = isSubject ? 'block' : 'none';
+  document.getElementById('btn-view-toggle').textContent = isSubject ? '공부방법별로 보기' : '과목별로 보기';
   if (isSubject) renderSubjectOverview();
 }
 
@@ -534,13 +535,13 @@ window.showTrackerSub = (sub) => {
 // ── 뷰 모드: 공부방법별 / 과목별 ──
 let trackerViewMode = 'method'; // 'method' | 'subject'
 
-window.setTrackerViewMode = (mode) => {
-  trackerViewMode = mode;
-  document.getElementById('btn-view-method').classList.toggle('active', mode === 'method');
-  document.getElementById('btn-view-subject').classList.toggle('active', mode === 'subject');
-  document.getElementById('tracker-grid-method').style.display = mode === 'method' ? 'block' : 'none';
-  document.getElementById('tracker-grid-subject').style.display = mode === 'subject' ? 'block' : 'none';
-  if (mode === 'subject') renderSubjectOverview();
+window.toggleTrackerViewMode = () => {
+  trackerViewMode = trackerViewMode === 'method' ? 'subject' : 'method';
+  const isSubject = trackerViewMode === 'subject';
+  document.getElementById('btn-view-toggle').textContent = isSubject ? '공부방법별로 보기' : '과목별로 보기';
+  document.getElementById('tracker-grid-method').style.display = isSubject ? 'none' : 'block';
+  document.getElementById('tracker-grid-subject').style.display = isSubject ? 'block' : 'none';
+  if (isSubject) renderSubjectOverview();
 };
 
 // 전체 과목 목록 수집 (강의 제외, concept/memo/choice/case)
@@ -1006,6 +1007,12 @@ window.toggleItem = (type, gi, ii, round) => {
     showToast(item.done ? '✓ 1회독 완료!' : '1회독 체크 해제');
   }
   renderSection(type); renderTrackerOverview(); scheduleSave();
+  // 과목별 상세 뷰가 열려 있으면 함께 갱신
+  const detailEl = document.getElementById('tracker-view-subject-detail');
+  if (detailEl && detailEl.style.display !== 'none') {
+    const subj = document.getElementById('subject-detail-title').textContent;
+    showSubjectDetail(subj);
+  }
 };
 
 window.delItem = (type, gi, ii) => {
