@@ -542,10 +542,16 @@ window.showTrackerMain = function showTrackerMain() {
 }
 
 window.showTrackerSub = (sub) => {
+  // 서브뷰 진입 시 토글 상태 초기화 (닫힘)
+  Object.keys(openGroups).forEach(k => openGroups[k] = new Set());
+  openCourses.clear();
   TRACKER_VIEWS.forEach(v => {
     const el = document.getElementById('tracker-view-' + v);
     if (el) el.style.display = v === sub ? 'block' : 'none';
   });
+  // 서브뷰 렌더 갱신
+  if (sub === 'lecture') renderLectures();
+  else if (['concept','memo','choice','case'].includes(sub)) renderSection(sub);
 };
 
 // ── 뷰 모드: 공부방법별 / 과목별 ──
@@ -561,29 +567,39 @@ window.toggleTrackerViewMode = () => {
 };
 
 // 전체 과목 목록 수집 (강의 제외, concept/memo/choice/case)
+// 같은 과목명이라도 책이 다르면 별개로 취급
 function getAllSubjectNames() {
   const types = ['concept','memo','choice','case'];
-  const names = new Set();
-  types.forEach(t => (state[t]||[]).forEach(g => names.add(g.name)));
-  return [...names].sort();
+  const keys = new Set();
+  types.forEach(t => (state[t]||[]).forEach(g => {
+    const key = g.book ? `${g.name}||${g.book}` : g.name;
+    keys.add(key);
+  }));
+  // name만 추출해 정렬 (표시용)
+  return [...keys].sort((a,b) => a.split('||')[0].localeCompare(b.split('||')[0]));
 }
 
 // 과목별 카드 렌더
 function renderSubjectOverview() {
   const grid = document.getElementById('subjectOverviewGrid');
   if (!grid) return;
-  const subjects = getAllSubjectNames();
+  const subjectKeys = getAllSubjectNames();
   const types = ['concept','memo','choice','case'];
   const typeNames = { concept:'개념서', memo:'암기장', choice:'선택형', case:'사례형' };
 
-  if (subjects.length === 0) {
+  if (subjectKeys.length === 0) {
     grid.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--text3);font-size:0.82rem;grid-column:1/-1;">과목을 먼저 추가해 주세요</div>';
     return;
   }
 
-  grid.innerHTML = subjects.map(subj => {
+  grid.innerHTML = subjectKeys.map(subjectKey => {
+    const [subj, book] = subjectKey.split('||');
     const rows = types.map(t => {
-      const group = (state[t]||[]).find(g => g.name === subj);
+      // book이 있으면 name+book 일치, 없으면 name만 일치하는 것 중 book 없는 것
+      const group = (state[t]||[]).find(g => {
+        if (book) return g.name === subj && g.book === book;
+        return g.name === subj && !g.book;
+      }) || (book ? null : (state[t]||[]).find(g => g.name === subj));
       if (!group) return null;
       const total = group.items.length;
       const done1 = group.items.filter(i=>i.done).length;
@@ -595,8 +611,8 @@ function renderSubjectOverview() {
 
     if (rows.length === 0) return '';
 
-    // 대표 진도: 모든 타입 1회독 평균
     const avgPct = Math.round(rows.reduce((s,r)=>s+r.pct1,0)/rows.length);
+    const displayName = book ? `${subj} <span style="font-size:0.72rem;color:var(--text3);font-weight:400;">${book}</span>` : subj;
 
     const rowsHtml = rows.map(r => `
       <div class="subject-card-row">
@@ -615,34 +631,45 @@ function renderSubjectOverview() {
       </div>` : ''}
     `).join('');
 
-    return `<div class="subject-card" onclick="showSubjectDetail('${subj.replace(/'/g,"\\'")}')">
-      <div class="subject-card-name">${subj}</div>
+    const safeKey = encodeURIComponent(subjectKey);
+    return `<div class="subject-card" onclick="showSubjectDetail('${safeKey}', true)">
+      <div class="subject-card-name">${displayName}</div>
       ${rowsHtml}
     </div>`;
   }).join('');
 }
 
 // 과목별 상세 뷰
-window.showSubjectDetail = (subj) => {
+window.showSubjectDetail = (subjectKeyEncoded, isEncoded) => {
+  const subjectKey = isEncoded ? decodeURIComponent(subjectKeyEncoded) : subjectKeyEncoded;
+  const [subj, book] = subjectKey.split('||');
+
   TRACKER_VIEWS.forEach(v => {
     const el = document.getElementById('tracker-view-' + v);
     if (el) el.style.display = v === 'subject-detail' ? 'block' : 'none';
   });
-  document.getElementById('subject-detail-title').textContent = subj;
+  const displayTitle = book ? `${subj} · ${book}` : subj;
+  document.getElementById('subject-detail-title').textContent = displayTitle;
+  // store key for toggleItem refresh
+  document.getElementById('subject-detail-title').dataset.subjectKey = subjectKey;
 
   const types = ['concept','memo','choice','case'];
   const typeNames = { concept:'개념서', memo:'암기장', choice:'선택형', case:'사례형' };
   const content = document.getElementById('subject-detail-content');
 
   const html = types.map(t => {
-    const group = (state[t]||[]).find(g => g.name === subj);
+    // match by name+book
+    const group = (state[t]||[]).find(g => {
+      if (book) return g.name === subj && g.book === book;
+      return g.name === subj && !g.book;
+    }) || (book ? null : (state[t]||[]).find(g => g.name === subj));
     if (!group || group.items.length === 0) return '';
     const total = group.items.length;
     const done1 = group.items.filter(i=>i.done).length;
     const done2 = group.items.filter(i=>i.done2).length;
     const pct1 = total ? Math.round(done1/total*100) : 0;
     const pct2 = total ? Math.round(done2/total*100) : 0;
-    const gi = (state[t]||[]).findIndex(g => g.name === subj);
+    const gi = (state[t]||[]).indexOf(group);
 
     const itemsHtml = group.items.map((item, ii) => {
       const rowDone = item.done && item.done2;
@@ -1038,8 +1065,9 @@ window.toggleItem = (type, gi, ii, round) => {
   // 과목별 상세 뷰가 열려 있으면 함께 갱신
   const detailEl = document.getElementById('tracker-view-subject-detail');
   if (detailEl && detailEl.style.display !== 'none') {
-    const subj = document.getElementById('subject-detail-title').textContent;
-    showSubjectDetail(subj);
+    const titleEl = document.getElementById('subject-detail-title');
+    const subjectKey = titleEl.dataset.subjectKey || titleEl.textContent;
+    showSubjectDetail(encodeURIComponent(subjectKey), true);
   }
 };
 
@@ -1055,6 +1083,11 @@ window.addItem = (type, gi) => {
   state[type][gi].items.push({label, done:false, done2:false});
   renderSection(type); renderTrackerOverview(); scheduleSave();
   showToast('항목이 추가됐어요');
+  // 렌더 후 같은 인풋에 포커스 복원
+  requestAnimationFrame(() => {
+    const newInp = document.getElementById(`item-input-${type}-${gi}`);
+    if (newInp) newInp.focus();
+  });
 };
 
 window.addSubject = (type) => {
