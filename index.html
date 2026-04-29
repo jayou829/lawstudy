@@ -425,14 +425,6 @@
       <button onclick="resetWeeklyData()" style="background:none;border:1px solid var(--border);color:var(--text3);border-radius:6px;padding:0.25rem 0.65rem;font-size:0.7rem;font-family:'Pretendard',sans-serif;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.borderColor='var(--red)';this.style.color='var(--red)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text3)'">시간표 초기화</button>
     </div>
 
-    <!-- 카테고리 관리 -->
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:0.85rem 1rem;margin-bottom:1rem;">
-      <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.6rem;">
-        <span style="font-size:0.75rem;font-weight:600;color:var(--text2);">카테고리</span>
-      </div>
-      <div class="cat-tags-row" id="cat-manage-list" style="margin-bottom:0;"></div>
-    </div>
-    
     <div class="week-tabs" id="weekTabs">
       <button class="week-tab" onclick="selectWeekDay(0,this)">월</button>
       <button class="week-tab" onclick="selectWeekDay(1,this)">화</button>
@@ -1084,11 +1076,12 @@ function renderCalendar() {
       isToday ? 'today-cal' : '',
       isSelected ? 'selected' : ''
     ].filter(Boolean).join(' ');
-    // 공부 시간 합계
+    // 공부 시간 합계: 기록된 항목 + 오늘이면 현재 체크리스트도 합산
     let timeLabel = '';
-    if (hasRecord) {
+    if (hasRecord || dateKey === todayStr) {
       const dayItems = history[dateKey] || [];
       let totalMins = 0;
+      // 아카이브된 항목
       dayItems.forEach(item => {
         const t = (item.studyTime || '').trim();
         if (/^\d{1,2}:\d{2}$/.test(t)) {
@@ -1096,6 +1089,16 @@ function renderCalendar() {
           totalMins += h * 60 + m;
         }
       });
+      // 오늘 날짜면 현재 체크리스트의 시간도 합산
+      if (dateKey === todayStr) {
+        (state.checklist || []).forEach(item => {
+          const t = (item.studyTime || '').trim();
+          if (/^\d{1,2}:\d{2}$/.test(t)) {
+            const [h, m] = t.split(':').map(Number);
+            totalMins += h * 60 + m;
+          }
+        });
+      }
       if (totalMins > 0) {
         const hh = String(Math.floor(totalMins / 60)).padStart(2,'0');
         const mm = String(totalMins % 60).padStart(2,'0');
@@ -1117,23 +1120,46 @@ function renderCalRecord(dateKey) {
   const el = document.getElementById('cl-record-list');
   if (!dateKey) { el.innerHTML = ''; return; }
   const history = state.doneHistory || {};
-  const items = history[dateKey] || [];
   const [y, m, d] = dateKey.split('-');
   const label = `${y}년 ${parseInt(m)}월 ${parseInt(d)}일`;
 
-  if (items.length === 0) {
+  const now = new Date();
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+  const isToday = dateKey === todayStr;
+
+  // 아카이브 항목 + 오늘이면 현재 체크리스트도 포함
+  const archivedItems = history[dateKey] || [];
+  const todayItems = isToday ? (state.checklist || []) : [];
+  const allItems = [...archivedItems, ...todayItems];
+
+  // 공부 시간 합계
+  let totalMins = 0;
+  allItems.forEach(item => {
+    const t = (item.studyTime || '').trim();
+    if (/^\d{1,2}:\d{2}$/.test(t)) {
+      const [h, mn] = t.split(':').map(Number);
+      totalMins += h * 60 + mn;
+    }
+  });
+  const timeStr = totalMins > 0
+    ? ` · ⏱ ${String(Math.floor(totalMins/60)).padStart(2,'0')}:${String(totalMins%60).padStart(2,'0')}`
+    : '';
+
+  if (allItems.length === 0) {
     el.innerHTML = `<div class="cl-record-date-title">${label}</div><div class="cl-record-empty">기록된 항목이 없어요</div>`;
     return;
   }
-  const rows = items.map(item => {
-    const color = item.done ? 'var(--green2)' : 'var(--red)';
+  const rows = allItems.map(item => {
+    const color = item.done ? 'var(--green2)' : item.failed ? 'var(--red)' : 'var(--border)';
     const strike = item.failed ? 'text-decoration:line-through;color:var(--text3);' : '';
+    const timeTag = item.studyTime ? `<span style="font-size:0.68rem;color:var(--gold);margin-left:auto;font-family:'Pretendard',sans-serif;">⏱ ${item.studyTime}</span>` : '';
     return `<div class="cl-record-item">
       <div class="cl-record-dot" style="background:${color};"></div>
       <span style="${strike}">${item.text}</span>
+      ${timeTag}
     </div>`;
   }).join('');
-  el.innerHTML = `<div class="cl-record-date-title">${label} · ${items.length}개</div>${rows}`;
+  el.innerHTML = `<div class="cl-record-date-title">${label} · ${allItems.length}개${timeStr}</div>${rows}`;
 }
 
 function renderTodayTimetable() {
